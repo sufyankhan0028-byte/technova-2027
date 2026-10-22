@@ -1,0 +1,1157 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TECHNOVA 2027 — 24-Hour Inter-College Retro Arcade Hackathon</title>
+    <meta
+      name="description"
+      content="TECHNOVA 2027 is a 24-hour college hackathon bringing 500+ hackers together to build the future of AI, Web3, FinTech, and GameDev with $15,000+ in prizes. Level up your code."
+    />
+    <meta name="keywords" content="hackathon, technova 2027, retro arcade hackathon, college hackathon, coding competition, 24 hour hackathon, tech innovation" />
+    <meta property="og:title" content="TECHNOVA 2027 — Level Up Your Code" />
+    <meta property="og:description" content="24 Hours. $15,000+ in Prizes. 500+ Hackers. Infinite Possibilities. March 12-13, 2027." />
+    <meta property="og:type" content="website" />
+
+    <!-- Google Fonts: Press Start 2P (Pixel display), Space Grotesk (Modern Sans), JetBrains Mono (Arcade Code/Stats) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&family=Press+Start+2P&family=Space+Grotesk:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body class="crt-enabled">
+    <!-- Retro CRT scanline and vignette overlay -->
+    <div id="crt-overlay" class="crt-overlay"></div>
+    <div id="grid-bg" class="grid-bg"></div>
+
+    <!-- AUDIO SFX & CRT CONTROLS HUD -->
+    <div class="hud-controls" aria-label="Arcade Settings">
+      <button id="sfx-toggle-btn" class="hud-btn" title="Toggle 8-bit Audio SFX" aria-pressed="true">
+        <span class="hud-icon">🔊</span>
+        <span class="hud-label">SFX: ON</span>
+      </button>
+      <button id="crt-toggle-btn" class="hud-btn" title="Toggle CRT Retro Filter" aria-pressed="true">
+        <span class="hud-icon">📺</span>
+        <span class="hud-label">CRT: ON</span>
+      </button>
+    </div>
+
+    <!-- STICKY RETRO ARCADE NAVIGATION BAR -->
+    <header class="navbar-wrapper">
+      <nav class="navbar" id="navbar">
+        <!-- Logo -->
+        <a href="#hero" class="nav-brand" id="nav-brand" aria-label="Technova 2027 Home">
+          <div class="brand-monogram">
+            <span class="monogram-pixel">TN</span>
+            <span class="monogram-glow"></span>
+          </div>
+          <div class="brand-text">
+            <span class="brand-title">TECHNOVA</span>
+            <span class="brand-year">'27</span>
+          </div>
+        </a>
+
+        <!-- Desktop Navigation Links -->
+        <ul class="nav-links" id="nav-links">
+          <li><a href="#about" class="nav-link"><span class="nav-num">01.</span>ABOUT</a></li>
+          <li><a href="#tracks" class="nav-link"><span class="nav-num">02.</span>TRACKS</a></li>
+          <li><a href="#schedule" class="nav-link"><span class="nav-num">03.</span>SCHEDULE</a></li>
+          <li><a href="#prizes" class="nav-link"><span class="nav-num">04.</span>PRIZES</a></li>
+          <li><a href="#sponsors" class="nav-link"><span class="nav-num">05.</span>SPONSORS</a></li>
+          <li><a href="#faq" class="nav-link"><span class="nav-num">06.</span>FAQ</a></li>
+          <li><a href="#arcade-zone" class="nav-link minigame-nav-link"><span class="nav-pixel-badge">GAME</span>PLAY</a></li>
+        </ul>
+
+        <!-- Right CTA Button -->
+        <div class="nav-actions">
+          <button id="open-register-nav-btn" class="arcade-btn arcade-btn-pink">
+            <span class="btn-scanline"></span>
+            <span class="btn-text">REGISTER NOW</span>
+            <span class="btn-indicator">▶</span>
+          </button>
+
+          <!-- Mobile Hamburger -->
+          <button class="hamburger-btn" id="hamburger-btn" aria-label="Open Navigation Menu" aria-expanded="false">
+            <span class="hamburger-line"></span>
+            <span class="hamburger-line"></span>
+            <span class="hamburger-line"></span>
+          </button>
+        </div>
+      </nav>
+
+      <!-- Mobile Dropdown Drawer -->
+      <div class="mobile-menu" id="mobile-menu">
+        <ul class="mobile-nav-links">
+          <li><a href="#about" class="mobile-nav-link"><span>01</span> ABOUT</a></li>
+          <li><a href="#tracks" class="mobile-nav-link"><span>02</span> TRACKS</a></li>
+          <li><a href="#schedule" class="mobile-nav-link"><span>03</span> SCHEDULE</a></li>
+          <li><a href="#prizes" class="mobile-nav-link"><span>04</span> PRIZES</a></li>
+          <li><a href="#sponsors" class="mobile-nav-link"><span>05</span> SPONSORS</a></li>
+          <li><a href="#faq" class="mobile-nav-link"><span>06</span> FAQ</a></li>
+          <li><a href="#arcade-zone" class="mobile-nav-link"><span>07</span> RETRO GAME ZONE</a></li>
+        </ul>
+        <div class="mobile-menu-footer">
+          <button id="mobile-register-btn" class="arcade-btn arcade-btn-pink w-full">
+            <span class="btn-text">REGISTER NOW [START]</span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <!-- HERO SECTION WITH THREE.JS 3D FLOATING ARCADE OBJECTS -->
+      <section class="hero-section" id="hero">
+        <!-- Interactive 3D Canvas Background -->
+        <div class="canvas-container" id="canvas-container">
+          <canvas id="three-canvas"></canvas>
+          <!-- 3D Scene Controls Hint -->
+          <div class="scene-hint" id="scene-hint">
+            <span class="hint-dot"></span>
+            <span>INTERACTIVE 3D ARCADE: MOVE CURSOR TO PARALLAX • CLICK OBJECTS TO POP</span>
+          </div>
+        </div>
+
+        <!-- Ambient Hero Lighting -->
+        <div class="hero-ambient-glow glow-pink"></div>
+        <div class="hero-ambient-glow glow-yellow"></div>
+        <div class="hero-ambient-glow glow-blue"></div>
+
+        <!-- Hero Content Layer -->
+        <div class="hero-content">
+          <!-- Top Tag Badge -->
+          <div class="hero-badge-pill" data-aos="fade-down">
+            <span class="pixel-star-icon">★</span>
+            <span class="badge-code">LEVEL 01</span>
+            <span class="badge-separator">/</span>
+            <span class="badge-desc">MARCH 12-13, 2027 • 24-HOUR INTER-COLLEGE HACKATHON</span>
+          </div>
+
+          <!-- Main Hero Title -->
+          <div class="hero-title-container">
+            <h1 class="hero-title" data-glitch="TECHNOVA 2027">
+              <span class="title-word-techno">TECHNOVA</span>
+              <span class="title-word-year">2027</span>
+            </h1>
+            <div class="title-sub-reflection" aria-hidden="true">TECHNOVA 2027</div>
+          </div>
+
+          <!-- Subtitle / Arcade Mission -->
+          <p class="hero-tagline">
+            INSERT COIN TO INNOVATE. 24 HOURS OF CODE, CREATIVITY &amp; CHAOS.
+            <span class="tagline-highlight">500+ HACKERS</span> COMPETING FOR
+            <span class="tagline-bounty">$15,000+ IN BOUNTIES</span>.
+          </p>
+
+          <!-- Key Event Stats Badges -->
+          <div class="hero-stats-bar">
+            <div class="stat-badge">
+              <span class="stat-icon">⏱️</span>
+              <div class="stat-info">
+                <span class="stat-val">8 HRS</span>
+                <span class="stat-lbl">NON-STOP HACKING</span>
+              </div>
+            </div>
+            <div class="stat-badge">
+              <span class="stat-icon">🏆</span>
+              <div class="stat-info">
+                <span class="stat-val"><span class="stat-currency">₹</span>30K</span>
+                <span class="stat-lbl">PRIZE POOL</span>
+              </div>
+            </div>
+            <div class="stat-badge">
+              <span class="stat-icon">👾</span>
+              <div class="stat-info">
+                <span class="stat-val">300+</span>
+                <span class="stat-lbl">HACKERS</span>
+              </div>
+            </div>
+            <div class="stat-badge">
+              <span class="stat-icon">🏛️</span>
+              <div class="stat-info">
+                <span class="stat-val">BURHANI COLLEGE</span>
+                <span class="stat-lbl">HOST COLLEGE</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- LIVE RETRO ARCADE COUNTDOWN TIMER -->
+          <div class="arcade-timer-box" id="arcade-countdown">
+            <div class="timer-header">
+              <span class="timer-led-dot"></span>
+              <span class="timer-title">HACKATHON LAUNCH COUNTDOWN</span>
+              <span class="timer-status">[SYSTEM ONLINE]</span>
+            </div>
+            <div class="timer-digits">
+              <div class="timer-unit">
+                <div class="digit-box" id="days-box"><span id="days">142</span></div>
+                <span class="unit-label">DAYS</span>
+              </div>
+              <span class="timer-colon">:</span>
+              <div class="timer-unit">
+                <div class="digit-box" id="hours-box"><span id="hours">18</span></div>
+                <span class="unit-label">HOURS</span>
+              </div>
+              <span class="timer-colon">:</span>
+              <div class="timer-unit">
+                <div class="digit-box" id="mins-box"><span id="mins">44</span></div>
+                <span class="unit-label">MINS</span>
+              </div>
+              <span class="timer-colon">:</span>
+              <div class="timer-unit">
+                <div class="digit-box" id="secs-box"><span id="secs">09</span></div>
+                <span class="unit-label">SECS</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Hero Action CTAs -->
+          <div class="hero-actions">
+            <button id="hero-register-btn" class="arcade-btn arcade-btn-pink arcade-btn-lg">
+              <span class="btn-scanline"></span>
+              <span class="btn-corner tl"></span>
+              <span class="btn-corner tr"></span>
+              <span class="btn-corner bl"></span>
+              <span class="btn-corner br"></span>
+              <span class="btn-icon">🎮</span>
+              <span class="btn-text">REGISTER NOW [PRESS START]</span>
+            </button>
+            <a href="#tracks" class="arcade-btn arcade-btn-yellow arcade-btn-lg">
+              <span class="btn-scanline"></span>
+              <span class="btn-corner tl"></span>
+              <span class="btn-corner tr"></span>
+              <span class="btn-corner bl"></span>
+              <span class="btn-corner br"></span>
+              <span class="btn-icon">⚡</span>
+              <span class="btn-text">EXPLORE TRACKS</span>
+            </a>
+            <button id="quick-play-btn" class="arcade-btn arcade-btn-ghost">
+              <span class="btn-icon">👾</span>
+              <span class="btn-text">PLAY MINI-GAME</span>
+            </button>
+          </div>
+
+          <!-- Scroll Indicator -->
+          <a href="#about" class="hero-scroll-cue" aria-label="Scroll to content">
+            <span class="scroll-mouse">
+              <span class="scroll-wheel"></span>
+            </span>
+            <span class="scroll-text">SCROLL TO LEVEL 02</span>
+            <span class="scroll-arrow">▼</span>
+          </a>
+        </div>
+      </section>
+
+      <!-- TICKER TAPE BANNER -->
+      <div class="arcade-ticker-wrap" aria-label="Announcement Ticker">
+        <div class="arcade-ticker">
+          <div class="ticker-content">
+            <span><span class="ticker-currency">₹</span>30,000 PRIZE POOL</span>
+            <span class="ticker-star">★</span>
+            <span>8-HOUR HACKATHON</span>
+            <span class="ticker-star">★</span>
+            <span>5 EXCITING TRACKS</span>
+            <span class="ticker-star">★</span>
+            <span>FREE MEALS PROVIDED</span>
+            <span class="ticker-star">★</span>
+            <span><span class="ticker-currency">₹</span>30,000 PRIZE POOL</span>
+            <span class="ticker-star">★</span>
+            <span>8-HOUR HACKATHON</span>
+            <span class="ticker-star">★</span>
+            <span>5 EXCITING TRACKS</span>
+            <span class="ticker-star">★</span>
+            <span>FREE MEALS PROVIDED</span>
+            <span class="ticker-star">★</span>
+            <span><span class="ticker-currency">₹</span>30,000 PRIZE POOL</span>
+            <span class="ticker-star">★</span>
+            <span>8-HOUR HACKATHON</span>
+            <span class="ticker-star">★</span>
+            <span>5 EXCITING TRACKS</span>
+            <span class="ticker-star">★</span>
+            <span>FREE MEALS PROVIDED</span>
+            <span class="ticker-star">★</span>
+          </div>
+          <div class="ticker-content" aria-hidden="true">
+            <span><span class="ticker-currency">₹</span>30,000 PRIZE POOL</span>
+            <span class="ticker-star">★</span>
+            <span>8-HOUR HACKATHON</span>
+            <span class="ticker-star">★</span>
+            <span>5 EXCITING TRACKS</span>
+            <span class="ticker-star">★</span>
+            <span>FREE MEALS PROVIDED</span>
+            <span class="ticker-star">★</span>
+            <span><span class="ticker-currency">₹</span>30,000 PRIZE POOL</span>
+            <span class="ticker-star">★</span>
+            <span>8-HOUR HACKATHON</span>
+            <span class="ticker-star">★</span>
+            <span>5 EXCITING TRACKS</span>
+            <span class="ticker-star">★</span>
+            <span>FREE MEALS PROVIDED</span>
+            <span class="ticker-star">★</span>
+            <span><span class="ticker-currency">₹</span>30,000 PRIZE POOL</span>
+            <span class="ticker-star">★</span>
+            <span>8-HOUR HACKATHON</span>
+            <span class="ticker-star">★</span>
+            <span>5 EXCITING TRACKS</span>
+            <span class="ticker-star">★</span>
+            <span>FREE MEALS PROVIDED</span>
+            <span class="ticker-star">★</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ABOUT SECTION -->
+      <section class="section-container" id="about">
+        <div class="section-badge">
+          <span class="badge-num">// 01</span>
+          <span class="badge-title">SYSTEM_ORIGIN.EXE</span>
+        </div>
+        <div class="section-header">
+          <h2 class="section-title">THE TECHNOVA ODYSSEY</h2>
+          <p class="section-subtitle">
+            Born from the vibrant college developer community, TECHNOVA 2027 fuses retro 80s arcade adrenaline with cutting-edge frontier technologies.
+          </p>
+        </div>
+
+        <div class="about-grid">
+          <!-- Terminal Visual Card -->
+          <div class="arcade-card terminal-card">
+            <div class="terminal-bar">
+              <div class="terminal-dots">
+                <span class="dot dot-red"></span>
+                <span class="dot dot-yellow"></span>
+                <span class="dot dot-green"></span>
+              </div>
+              <span class="terminal-title">bash — guest@technova-2027:~$</span>
+            </div>
+            <div class="terminal-body">
+              <p><span class="term-prompt">&gt;</span> <span class="term-cmd">cat hackathon_mission.log</span></p>
+              <p class="term-output">
+                [OK] Initiating TECHNOVA Protocol...<br />
+                [OK] Target: 300+ Student Innovators.<br />
+                [OK] Duration: 8 Continuous Hours of Innovation.<br />
+                [OK] Team Size: Assemble teams of 2-4 members.<br />
+                [OK] Mission: Build innovative solutions, collaborate, and turn ideas into working prototypes.
+              </p>
+              <p><span class="term-prompt">&gt;</span> <span class="term-cmd">verify --team --innovation --community</span></p>
+              <p class="term-output term-success">
+                [SUCCESS] 300+ Participants Expected.<br />
+                [SUCCESS] Team-Based Innovation: 2-4 Members.<br />
+                [SUCCESS] Eight Hours of Focused Building.<br />
+                [SUCCESS] Learn, Collaborate, Build Connections.
+              </p>
+              <p class="term-cursor-line">
+                <span class="term-prompt">&gt;</span> <span class="term-cmd typing-demo">ready to build</span><span class="term-blink">█</span>
+              </p>
+            </div>
+          </div>
+
+          <!-- Feature Cards 2x2 Grid -->
+          <div class="about-features">
+            <!-- Card 1 -->
+            <div class="feature-card card-pink">
+              <div class="feature-icon-box pink-glow">
+                <span>⚡</span>
+              </div>
+              <div class="feature-content">
+                <h3 class="feature-title">8-Hour Innovation Sprint</h3>
+                <p class="feature-desc">
+                  Turn an idea into a working prototype in eight focused hours. Collaborate with your team, experiment with technology, and bring your solution to life.
+                </p>
+              </div>
+            </div>
+
+            <!-- Card 2 -->
+            <div class="feature-card card-yellow">
+              <div class="feature-icon-box yellow-glow">
+                <span>🧠</span>
+              </div>
+              <div class="feature-content">
+                <h3 class="feature-title">Learn from Experts</h3>
+                <p class="feature-desc">
+                  Get the opportunity to learn from experienced professionals and fellow innovators. Mentor participation and availability will be announced by the organizers.
+                </p>
+              </div>
+            </div>
+
+            <!-- Card 3 -->
+            <div class="feature-card card-cyan">
+              <div class="feature-icon-box cyan-glow">
+                <span>🔗</span>
+              </div>
+              <div class="feature-content">
+                <h3 class="feature-title">Build Connections</h3>
+                <p class="feature-desc">
+                  Meet passionate student innovators, exchange ideas across teams, share knowledge, and grow your network through collaboration and problem-solving.
+                </p>
+              </div>
+            </div>
+
+            <!-- Card 4 -->
+            <div class="feature-card card-purple">
+              <div class="feature-icon-box purple-glow">
+                <span>🕹️</span>
+              </div>
+              <div class="feature-content">
+                <h3 class="feature-title">Innovation Arena</h3>
+                <p class="feature-desc">
+                  Challenge yourself, explore creative approaches, and work with your team to develop practical solutions to real-world problems.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Metric Counters Row -->
+        <div class="metrics-row">
+          <div class="metric-box">
+            <div class="metric-num"><span class="counter" data-target="8">8</span><span class="metric-unit">H</span></div>
+            <div class="metric-label">Hacking Duration</div>
+          </div>
+          <div class="metric-box">
+            <div class="metric-num"><span class="metric-currency">₹</span><span class="counter" data-target="30">30</span><span class="metric-unit">K</span></div>
+            <div class="metric-label">Prize Bounty</div>
+          </div>
+          <div class="metric-box">
+            <div class="metric-num"><span class="counter" data-target="300">300</span><span class="metric-unit">+</span></div>
+            <div class="metric-label">Target Innovators</div>
+          </div>
+          <div class="metric-box">
+            <div class="metric-num"><span class="counter" data-target="5">5</span></div>
+            <div class="metric-label">Epic Tracks</div>
+          </div>
+          <div class="metric-box">
+            <div class="metric-num"><span class="counter" data-target="100">100</span><span class="metric-unit">%</span></div>
+            <div class="metric-label">Free Registration</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TRACKS SECTION ("SELECT YOUR MISSION") -->
+      <section class="section-container" id="tracks">
+        <div class="section-badge">
+          <span class="badge-num">// 02</span>
+          <span class="badge-title">SELECT_STAGE.ROM</span>
+        </div>
+        <div class="section-header">
+          <h2 class="section-title">CHOOSE YOUR ARENA TRACK</h2>
+          <p class="section-subtitle">
+            Explore 5 themed challenge tracks designed to solve real-world problems through technology and innovation.
+          </p>
+          <p class="section-sub-supporting">
+            Build in teams of 2–4 participants. Each track features two defined challenges and one Open Innovation challenge.
+          </p>
+        </div>
+
+        <!-- Track Filter Buttons -->
+        <div class="track-filters" role="tablist">
+          <button class="filter-btn active" data-filter="all">ALL TRACKS</button>
+          <button class="filter-btn" data-filter="track1">01. TRUST &amp; SAFETY</button>
+          <button class="filter-btn" data-filter="track2">02. FINTECH</button>
+          <button class="filter-btn" data-filter="track3">03. AGRITECH</button>
+          <button class="filter-btn" data-filter="track4">04. ACCESSIBILITY</button>
+          <button class="filter-btn" data-filter="track5">05. AI AGENTS</button>
+        </div>
+
+        <!-- Tracks Cartridge Cards Grid -->
+        <div class="tracks-grid">
+          <!-- Track 01: Can You Trust What You See? -->
+          <div class="track-card" data-category="track1" data-track="track1" role="button" tabindex="0" aria-haspopup="dialog" aria-label="Track 01: Can You Trust What You See? — Click to view challenges">
+            <div class="track-card-header">
+              <span class="track-badge badge-track1">TRACK 01</span>
+              <span class="track-difficulty">3 CHALLENGES</span>
+            </div>
+            <div class="track-icon-wrapper pink-border">
+              <span class="track-icon">🛡️</span>
+            </div>
+            <h3 class="track-title">Can You Trust What You See?</h3>
+            <div class="track-theme-tag">Theme: Digital Trust, Cybersecurity &amp; Online Safety</div>
+            <p class="track-desc">
+              Identify suspicious digital interactions before harm occurs, investigate manipulated media and cloned voices with honest certainty, and build solutions that strengthen digital safety.
+            </p>
+            <div class="track-tags">
+              <span class="pill-tag">Digital Trust</span>
+              <span class="pill-tag">Cybersecurity</span>
+              <span class="pill-tag">Online Safety</span>
+              <span class="pill-tag">Media Provenance</span>
+            </div>
+            <div class="track-footer">
+              <span class="track-challenges-count">PS 01 • PS 02 • OPEN</span>
+            </div>
+          </div>
+
+          <!-- Track 02: Survive the Money Game -->
+          <div class="track-card" data-category="track2" data-track="track2" role="button" tabindex="0" aria-haspopup="dialog" aria-label="Track 02: Survive the Money Game — Click to view challenges">
+            <div class="track-card-header">
+              <span class="track-badge badge-track2">TRACK 02</span>
+              <span class="track-difficulty">3 CHALLENGES</span>
+            </div>
+            <div class="track-icon-wrapper yellow-border">
+              <span class="track-icon">💳</span>
+            </div>
+            <h3 class="track-title">Survive the Money Game</h3>
+            <div class="track-theme-tag">Theme: FinTech, Financial Literacy &amp; Financial Inclusion</div>
+            <p class="track-desc">
+              Help individuals manage irregular incomes to make it to month-end, evaluate deceptive payment requests and QR scams, and expand transparent financial access for underserved communities.
+            </p>
+            <div class="track-tags">
+              <span class="pill-tag">FinTech</span>
+              <span class="pill-tag">Financial Literacy</span>
+              <span class="pill-tag">Payment Security</span>
+              <span class="pill-tag">Inclusion</span>
+            </div>
+            <div class="track-footer">
+              <span class="track-challenges-count">PS 01 • PS 02 • OPEN</span>
+            </div>
+          </div>
+
+          <!-- Track 03: From Soil to Shelf -->
+          <div class="track-card" data-category="track3" data-track="track3" role="button" tabindex="0" aria-haspopup="dialog" aria-label="Track 03: From Soil to Shelf — Click to view challenges">
+            <div class="track-card-header">
+              <span class="track-badge badge-track3">TRACK 03</span>
+              <span class="track-difficulty">3 CHALLENGES</span>
+            </div>
+            <div class="track-icon-wrapper cyan-border">
+              <span class="track-icon">🌱</span>
+            </div>
+            <h3 class="track-title">From Soil to Shelf</h3>
+            <div class="track-theme-tag">Theme: AgriTech, Food Systems &amp; Supply Chains</div>
+            <p class="track-desc">
+              Empower farmers with reliable market-price transparency, prevent avoidable food waste across harvesting and retail, and build innovative solutions to rethink agricultural distribution.
+            </p>
+            <div class="track-tags">
+              <span class="pill-tag">AgriTech</span>
+              <span class="pill-tag">Food Systems</span>
+              <span class="pill-tag">Supply Chains</span>
+              <span class="pill-tag">Waste Reduction</span>
+            </div>
+            <div class="track-footer">
+              <span class="track-challenges-count">PS 01 • PS 02 • OPEN</span>
+            </div>
+          </div>
+
+          <!-- Track 04: Technology Without Barriers -->
+          <div class="track-card" data-category="track4" data-track="track4" role="button" tabindex="0" aria-haspopup="dialog" aria-label="Track 04: Technology Without Barriers — Click to view challenges">
+            <div class="track-card-header">
+              <span class="track-badge badge-track4">TRACK 04</span>
+              <span class="track-difficulty">3 CHALLENGES</span>
+            </div>
+            <div class="track-icon-wrapper purple-border">
+              <span class="track-icon">♿</span>
+            </div>
+            <h3 class="track-title">Technology Without Barriers</h3>
+            <div class="track-theme-tag">Theme: Accessibility, Assistive Technology &amp; Inclusive Healthcare</div>
+            <p class="track-desc">
+              Build assistive solutions that help people navigate unfamiliar spaces with confidence, remove digital and communication barriers in healthcare, and design services accessible to all.
+            </p>
+            <div class="track-tags">
+              <span class="pill-tag">Accessibility</span>
+              <span class="pill-tag">Assistive Tech</span>
+              <span class="pill-tag">Healthcare</span>
+              <span class="pill-tag">Inclusive Design</span>
+            </div>
+            <div class="track-footer">
+              <span class="track-challenges-count">PS 01 • PS 02 • OPEN</span>
+            </div>
+          </div>
+
+          <!-- Track 05: Make the Impossible Routine -->
+          <div class="track-card" data-category="track5" data-track="track5" role="button" tabindex="0" aria-haspopup="dialog" aria-label="Track 05: Make the Impossible Routine — Click to view challenges">
+            <div class="track-card-header">
+              <span class="track-badge badge-track5">TRACK 05</span>
+              <span class="track-difficulty">3 CHALLENGES</span>
+            </div>
+            <div class="track-icon-wrapper blue-border">
+              <span class="track-icon">🤖</span>
+            </div>
+            <h3 class="track-title">Make the Impossible Routine</h3>
+            <div class="track-theme-tag">Theme: AI Agents, Intelligent Automation &amp; Smart Systems</div>
+            <p class="track-desc">
+              Create autonomous AI agents capable of planning and completing multi-step workflows, eliminate repetitive administrative tasks for small teams, and pioneer AI beyond the chatbot.
+            </p>
+            <div class="track-tags">
+              <span class="pill-tag">AI Agents</span>
+              <span class="pill-tag">Automation</span>
+              <span class="pill-tag">Smart Systems</span>
+              <span class="pill-tag">Workflows</span>
+            </div>
+            <div class="track-footer">
+              <span class="track-challenges-count">PS 01 • PS 02 • OPEN</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SCHEDULE TIMELINE (8-HOUR HACKATHON) -->
+      <section class="section-container" id="schedule">
+        <div class="section-badge schedule-badge-wrap">
+          <span class="badge-num">// 03</span>
+          <span class="badge-title">TIME_WARP.DAT</span>
+        </div>
+        <div class="schedule-header">
+          <h2 class="section-title schedule-title-yellow">EVENT SCHEDULE</h2>
+          <div class="schedule-pink-line"></div>
+          <p class="section-subtitle schedule-subtitle">
+            An intense 8-hour sprint from check-in to the grand awards ceremony. Keep your eye on the level progression.
+          </p>
+        </div>
+
+        <!-- Continuous Vertical 8-Hour Timeline -->
+        <div class="timeline-container-8h">
+          <!-- Yellow pixel-art Pac-Man decorative element beside the timeline -->
+          <div class="timeline-pacman-row">
+            <div class="pacman-container" aria-label="Arcade Pac-Man">
+              <svg width="34" height="34" viewBox="0 0 32 32" class="pacman-svg" aria-hidden="true">
+                <path d="M16 16 L27 8 A 14 14 0 1 0 27 24 Z" fill="#ffc400"/>
+                <circle cx="16" cy="8" r="2.2" fill="#000"/>
+              </svg>
+              <div class="pacman-pellets" aria-hidden="true">
+                <span class="cyan-pellet"></span>
+                <span class="cyan-pellet"></span>
+                <span class="cyan-pellet"></span>
+              </div>
+            </div>
+          </div>
+
+          <div class="timeline-8h-body">
+            <!-- Continuous vertical cyan line -->
+            <div class="timeline-line-continuous"></div>
+
+            <div class="timeline-milestones-list">
+              <!-- Milestone 01 -->
+              <div class="timeline-milestone-item">
+                <div class="milestone-marker">
+                  <span class="milestone-dot cyan-glow-dot"></span>
+                  <span class="milestone-branch"></span>
+                </div>
+                <div class="schedule-card card-accent-cyan">
+                  <h3 class="schedule-card-title">ARRIVAL &amp; REGISTRATION</h3>
+                  <div class="schedule-card-subtitle">CHECK-IN OPENS</div>
+                </div>
+              </div>
+
+              <!-- Milestone 02 -->
+              <div class="timeline-milestone-item">
+                <div class="milestone-marker">
+                  <span class="milestone-dot cyan-glow-dot"></span>
+                  <span class="milestone-branch"></span>
+                </div>
+                <div class="schedule-card card-accent-pink">
+                  <h3 class="schedule-card-title">OPENING CEREMONY</h3>
+                  <div class="schedule-card-subtitle">WELCOME &amp; EVENT BRIEFING</div>
+                </div>
+              </div>
+
+              <!-- Milestone 03 -->
+              <div class="timeline-milestone-item">
+                <div class="milestone-marker">
+                  <span class="milestone-dot cyan-glow-dot"></span>
+                  <span class="milestone-branch"></span>
+                </div>
+                <div class="schedule-card card-accent-yellow">
+                  <h3 class="schedule-card-title">TRACK REVEAL &amp; TEAM BRIEFING</h3>
+                  <div class="schedule-card-subtitle">CHOOSE YOUR CHALLENGE</div>
+                </div>
+              </div>
+
+              <!-- Milestone 04 -->
+              <div class="timeline-milestone-item">
+                <div class="milestone-marker">
+                  <span class="milestone-dot cyan-glow-dot"></span>
+                  <span class="milestone-branch"></span>
+                </div>
+                <div class="schedule-card card-accent-cyan">
+                  <h3 class="schedule-card-title">BUILD SPRINT BEGINS</h3>
+                  <div class="schedule-card-subtitle">8-HOUR HACKATHON</div>
+                </div>
+              </div>
+
+              <!-- Milestone 05 -->
+              <div class="timeline-milestone-item">
+                <div class="milestone-marker">
+                  <span class="milestone-dot cyan-glow-dot"></span>
+                  <span class="milestone-branch"></span>
+                </div>
+                <div class="schedule-card card-accent-pink">
+                  <h3 class="schedule-card-title">MENTORING &amp; PROGRESS CHECK</h3>
+                  <div class="schedule-card-subtitle">REFINE YOUR SOLUTION</div>
+                </div>
+              </div>
+
+              <!-- Milestone 06 -->
+              <div class="timeline-milestone-item">
+                <div class="milestone-marker">
+                  <span class="milestone-dot cyan-glow-dot"></span>
+                  <span class="milestone-branch"></span>
+                </div>
+                <div class="schedule-card card-accent-yellow">
+                  <h3 class="schedule-card-title">FINAL SUBMISSION WINDOW</h3>
+                  <div class="schedule-card-subtitle">CODE FREEZE</div>
+                </div>
+              </div>
+
+              <!-- Milestone 07 -->
+              <div class="timeline-milestone-item">
+                <div class="milestone-marker">
+                  <span class="milestone-dot cyan-glow-dot"></span>
+                  <span class="milestone-branch"></span>
+                </div>
+                <div class="schedule-card card-accent-cyan">
+                  <h3 class="schedule-card-title">PROJECT DEMOS &amp; JUDGING</h3>
+                  <div class="schedule-card-subtitle">SHOW WHAT YOU BUILT</div>
+                </div>
+              </div>
+
+              <!-- Milestone 08 -->
+              <div class="timeline-milestone-item">
+                <div class="milestone-marker">
+                  <span class="milestone-dot cyan-glow-dot"></span>
+                  <span class="milestone-branch"></span>
+                </div>
+                <div class="schedule-card card-accent-pink">
+                  <h3 class="schedule-card-title">AWARDS CEREMONY</h3>
+                  <div class="schedule-card-subtitle">GRAND FINALE</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- PRIZES SECTION ("LOOT BOXES & BOUNTIES") -->
+      <section class="section-container" id="prizes">
+        <div class="section-badge">
+          <span class="badge-num">// 04</span>
+          <span class="badge-title">LOOT_TABLE.JSON</span>
+        </div>
+        <div class="section-header">
+          <h2 class="section-title"><span class="prizes-currency">₹</span>30,000 CASH PRIZE POOL</h2>
+          <p class="section-subtitle">
+            Compete for a total cash prize pool of ₹30,000. Build innovative solutions, showcase your skills, and compete for the top three cash prizes.
+          </p>
+        </div>
+
+        <!-- Podium Cards (Overall Winners) -->
+        <div class="prizes-podium">
+          <!-- 2nd Place -->
+          <div class="podium-card podium-silver">
+            <div class="podium-rank">2ND PLACE</div>
+            <div class="trophy-icon">🥈</div>
+            <h3 class="podium-title">RUNNER UP</h3>
+            <div class="podium-cash"><span class="prizes-currency">₹</span>10,000</div>
+          </div>
+
+          <!-- 1st Place (Champion) -->
+          <div class="podium-card podium-gold">
+            <div class="podium-rank">1ST PLACE</div>
+            <div class="trophy-icon gold-glow">🏆</div>
+            <h3 class="podium-title">CHAMPION</h3>
+            <div class="podium-cash gold-cash"><span class="prizes-currency">₹</span>15,000</div>
+          </div>
+
+          <!-- 3rd Place -->
+          <div class="podium-card podium-bronze">
+            <div class="podium-rank">3RD PLACE</div>
+            <div class="trophy-icon">🥉</div>
+            <h3 class="podium-title">SECOND RUNNER UP</h3>
+            <div class="podium-cash"><span class="prizes-currency">₹</span>5,000</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- RETRO ARCADE MINI-GAME ZONE (PLAYABLE EASTER EGG) -->
+      <section class="section-container arcade-zone-section" id="arcade-zone">
+        <div class="section-badge">
+          <span class="badge-num">// 05</span>
+          <span class="badge-title">MINIGAME_CABINET.EXE</span>
+        </div>
+        <div class="section-header">
+          <h2 class="section-title">THE RETRO ARCADE CORNER</h2>
+          <p class="section-subtitle">
+            Need to stretch your fingers before the hackathon? Play <strong>BUG HUNTER '27</strong> directly on this retro cabinet!
+          </p>
+        </div>
+
+        <div class="arcade-cabinet-frame">
+          <div class="cabinet-marquee">
+            <span class="marquee-neon">★ TECHNOVA ARCADE — BUG HUNTER 2027 ★</span>
+          </div>
+
+          <div class="cabinet-screen-wrap">
+            <canvas id="minigame-canvas" width="640" height="360"></canvas>
+            
+            <!-- Minigame Overlay (Start/Game Over) -->
+            <div class="minigame-ui-overlay" id="minigame-overlay">
+              <div class="overlay-box" id="minigame-start-screen">
+                <h3 class="overlay-title">BUG HUNTER '27</h3>
+                <p class="overlay-rules">Catch Coffee Cups &amp; Code Stars • Dodge Red System Bugs!</p>
+                <div class="overlay-controls">
+                  <span>CONTROLS: [←] [→] ARROW KEYS OR MOUSE / TOUCH</span>
+                </div>
+                <button id="start-game-btn" class="arcade-btn arcade-btn-yellow arcade-btn-lg">
+                  <span class="btn-text">PRESS START [INSERT COIN]</span>
+                </button>
+              </div>
+
+              <div class="overlay-box hidden" id="minigame-gameover-screen">
+                <h3 class="overlay-title text-pink">GAME OVER</h3>
+                <p class="overlay-score-msg">FINAL SCORE: <span id="final-score" class="text-yellow">0</span></p>
+                <p class="overlay-highscore-msg">HI-SCORE: <span id="high-score" class="text-yellow">0</span></p>
+                <button id="restart-game-btn" class="arcade-btn arcade-btn-pink">
+                  <span class="btn-text">PLAY AGAIN [1 MORE CREDIT]</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- In-Game HUD -->
+            <div class="cabinet-hud" id="cabinet-hud">
+              <div class="hud-item"><span class="hud-tag">SCORE:</span> <span id="hud-score">0000</span></div>
+              <div class="hud-item"><span class="hud-tag">LIVES:</span> <span id="hud-lives">❤️❤️❤️</span></div>
+              <div class="hud-item"><span class="hud-tag">HIGH:</span> <span id="hud-high">0500</span></div>
+            </div>
+          </div>
+
+          <div class="cabinet-controls-bar">
+            <div class="coin-slot">
+              <span class="coin-label">INSERT COIN</span>
+              <div class="coin-entry"></div>
+            </div>
+            <div class="joystick-mock">
+              <span class="stick-knob"></span>
+            </div>
+            <div class="arcade-buttons-mock">
+              <button class="mock-btn red-btn" id="minigame-left-btn" aria-label="Move Left">◀</button>
+              <button class="mock-btn blue-btn" id="minigame-right-btn" aria-label="Move Right">▶</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SPONSORS / POWERED BY SECTION -->
+      <section class="section-container sponsors-minimal-section" id="sponsors">
+        <div class="section-badge">
+          <span class="badge-num">// 06</span>
+          <span class="badge-title">GUILD_ALLIES.CFG</span>
+        </div>
+        <div class="section-header sponsors-header-minimal">
+          <h2 class="section-title">POWERED BY</h2>
+        </div>
+      </section>
+
+      <!-- FAQ SECTION (ARCADE HELP DESK) -->
+      <section class="section-container" id="faq">
+        <div class="section-badge">
+          <span class="badge-num">// 07</span>
+          <span class="badge-title">HELP_DESK.MAN</span>
+        </div>
+        <div class="section-header">
+          <h2 class="section-title">FREQUENTLY ASKED QUESTIONS</h2>
+          <p class="section-subtitle">
+            Everything you need to know before stepping onto the battle arena floor.
+          </p>
+        </div>
+
+        <div class="faq-accordion" id="faq-accordion">
+          <!-- Item 1 -->
+          <div class="faq-item">
+            <button class="faq-question" aria-expanded="false">
+              <span class="faq-title">Who is eligible to participate in TECHNOVA 2027?</span>
+              <span class="faq-icon">+</span>
+            </button>
+            <div class="faq-answer">
+              <p>
+                TECHNOVA 2027 is open to all enrolled undergraduate and graduate students from any accredited college or university worldwide. Recent graduates (within 1 year of graduation) and high school seniors aged 18+ are also warmly welcome!
+              </p>
+            </div>
+          </div>
+
+          <!-- Item 2 -->
+          <div class="faq-item">
+            <button class="faq-question" aria-expanded="false">
+              <span class="faq-title">What is the cost of registration?</span>
+              <span class="faq-icon">+</span>
+            </button>
+            <div class="faq-answer">
+              <p>
+                <strong>100% Free!</strong> Registration, meals, snacks, midnight pizza, energy drinks, official hoodies, swag packs, and mentorship access are completely free of charge thanks to our generous sponsors.
+              </p>
+            </div>
+          </div>
+
+          <!-- Item 3 -->
+          <div class="faq-item">
+            <button class="faq-question" aria-expanded="false">
+              <span class="faq-title">What is the team size requirement?</span>
+              <span class="faq-icon">+</span>
+            </button>
+            <div class="faq-answer">
+              <p>
+                Teams must consist of <strong>2 to 4 participants</strong>. Every track is built for collaborative problem solving, and solo participation is not permitted. If you don't have a team yet, we will host a dedicated Team Formation &amp; Mixer session before hacking starts, as well as matchmaking on our official Discord server.
+              </p>
+            </div>
+          </div>
+
+          <!-- Item 4 -->
+          <div class="faq-item">
+            <button class="faq-question" aria-expanded="false">
+              <span class="faq-title">I'm a complete beginner. Should I still apply?</span>
+              <span class="faq-icon">+</span>
+            </button>
+            <div class="faq-answer">
+              <p>
+                <strong>Absolutely!</strong> We have dedicated beginner-friendly workshops, roving mentors to assist with debugging, and a dedicated <em>Best Freshman / Beginner Team Bounty ($500)</em>. Hackathons are the best place to learn at warp speed.
+              </p>
+            </div>
+          </div>
+
+          <!-- Item 5 -->
+          <div class="faq-item">
+            <button class="faq-question" aria-expanded="false">
+              <span class="faq-title">Can I work on an existing project or use pre-written code?</span>
+              <span class="faq-icon">+</span>
+            </button>
+            <div class="faq-answer">
+              <p>
+                No. In accordance with fair-play arcade guidelines, all project source code, design assets, and functional logic must be written fresh during the official 24-hour hackathon window. You are free to use open-source libraries, APIs, and frameworks.
+              </p>
+            </div>
+          </div>
+
+          <!-- Item 6 -->
+          <div class="faq-item">
+            <button class="faq-question" aria-expanded="false">
+              <span class="faq-title">Who owns the intellectual property (IP) of what I build?</span>
+              <span class="faq-icon">+</span>
+            </button>
+            <div class="faq-answer">
+              <p>
+                <strong>You do.</strong> You and your teammates retain 100% full ownership and copyright of your creations, code repositories, and designs. Technova and its sponsors claim zero equity or ownership.
+              </p>
+            </div>
+          </div>
+
+          <!-- Item 7 -->
+          <div class="faq-item">
+            <button class="faq-question" aria-expanded="false">
+              <span class="faq-title">What should I bring to the campus arena?</span>
+              <span class="faq-icon">+</span>
+            </button>
+            <div class="faq-answer">
+              <p>
+                Bring your laptop, charger/power brick, valid student ID, any hardware or microcontrollers you plan to use, a refillable water bottle, and sleeping bag/toiletries if you plan to nap on-site in the quiet chill rooms.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- REGISTRATION / FINAL CALLOUT CTA BANNER -->
+      <section class="final-cta-section">
+        <div class="cta-retro-box">
+          <div class="cta-pixel-art">👾 🚀 ⚡ 🎮</div>
+          <h2 class="cta-main-title">READY TO ENTER THE ARENA?</h2>
+          <p class="cta-desc">
+            Limited to 500 hackers. Spots fill rapidly. Gather your squad, sharpen your keystrokes, and claim your spot at TECHNOVA 2027.
+          </p>
+          <div class="cta-actions-row">
+            <button id="final-register-btn" class="arcade-btn arcade-btn-pink arcade-btn-xl">
+              <span class="btn-scanline"></span>
+              <span class="btn-corner tl"></span>
+              <span class="btn-corner tr"></span>
+              <span class="btn-corner bl"></span>
+              <span class="btn-corner br"></span>
+              <span class="btn-text">REGISTER NOW — PLAYER 1 READY</span>
+            </button>
+          </div>
+          <span class="cta-footnote">100% FREE • MARCH 12-13, 2027 • TECH ARENA</span>
+        </div>
+      </section>
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="footer">
+      <div class="footer-top">
+        <div class="footer-brand">
+          <div class="brand-monogram">
+            <span class="monogram-pixel">TN</span>
+          </div>
+          <span class="brand-title">TECHNOVA 2027</span>
+          <p class="footer-tag">The premier college retro-arcade hackathon. Where code meets imagination.</p>
+        </div>
+
+        <div class="footer-nav-col">
+          <h4>NAVIGATION</h4>
+          <ul>
+            <li><a href="#about">About</a></li>
+            <li><a href="#tracks">Tracks</a></li>
+            <li><a href="#schedule">Schedule</a></li>
+            <li><a href="#prizes">Prizes</a></li>
+            <li><a href="#sponsors">Sponsors</a></li>
+            <li><a href="#faq">FAQ</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-nav-col">
+          <h4>RESOURCES</h4>
+          <ul>
+            <li><a href="#faq">Hacker Guide</a></li>
+            <li><a href="#about">Code of Conduct</a></li>
+            <li><a href="#arcade-zone">Mini-Game</a></li>
+            <li><a href="mailto:contact@technova2027.org">Contact Desk</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-social-col">
+          <h4>JOIN THE GUILD</h4>
+          <div class="social-links">
+            <a href="https://discord.com" target="_blank" rel="noopener noreferrer" class="social-btn" aria-label="Discord">
+              <span>👾</span> Discord
+            </a>
+            <a href="https://github.com" target="_blank" rel="noopener noreferrer" class="social-btn" aria-label="GitHub">
+              <span>💻</span> GitHub
+            </a>
+            <a href="https://x.com" target="_blank" rel="noopener noreferrer" class="social-btn" aria-label="X / Twitter">
+              <span>🐦</span> X / Twitter
+            </a>
+            <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" class="social-btn" aria-label="Instagram">
+              <span>📸</span> Instagram
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <p>© 2027 TECHNOVA HACKATHON. ORGANIZED WITH 💖 &amp; ☕ BY THE STUDENT COMPUTER GUILD.</p>
+        <button id="back-to-top-btn" class="back-to-top" aria-label="Back to top">
+          <span>▲ TOP</span>
+        </button>
+      </div>
+    </footer>
+
+    <!-- INTERACTIVE REGISTRATION MODAL ("PLAYER SELECT") -->
+    <div class="modal-backdrop hidden" id="register-modal" role="dialog" aria-modal="true" aria-labelledby="modal-heading">
+      <div class="modal-box">
+        <div class="modal-header">
+          <div class="modal-title-wrap">
+            <span class="modal-pixel-icon">🎮</span>
+            <h3 id="modal-heading" class="modal-title">PLAYER 1 REGISTRATION</h3>
+          </div>
+          <button class="modal-close-btn" id="modal-close-btn" aria-label="Close modal">✕</button>
+        </div>
+
+        <!-- FORM CONTENT -->
+        <form id="registration-form" class="registration-form">
+          <div class="form-banner">
+            <span>LEVEL 01: ENTER YOUR HACKER CREDENTIALS</span>
+          </div>
+
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="reg-name">FULL NAME <span class="req">*</span></label>
+              <input type="text" id="reg-name" name="name" required placeholder="e.g. Alex Chen" class="arcade-input" />
+            </div>
+
+            <div class="form-group">
+              <label for="reg-email">STUDENT EMAIL <span class="req">*</span></label>
+              <input type="email" id="reg-email" name="email" required placeholder="alex@university.edu" class="arcade-input" />
+            </div>
+
+            <div class="form-group">
+              <label for="reg-college">COLLEGE / UNIVERSITY <span class="req">*</span></label>
+              <input type="text" id="reg-college" name="college" required placeholder="e.g. Institute of Technology" class="arcade-input" />
+            </div>
+
+            <div class="form-group">
+              <label for="reg-team">TEAM NAME (2-4 MEMBERS) <span class="req">*</span></label>
+              <input type="text" id="reg-team" name="team" required placeholder="e.g. Pixel Pioneers" class="arcade-input" />
+            </div>
+
+            <div class="form-group">
+              <label for="reg-track">PREFERRED TRACK <span class="req">*</span></label>
+              <select id="reg-track" name="track" required class="arcade-input arcade-select">
+                <option value="">Select a challenge track...</option>
+                <option value="track1">🛡️ Track 01: Can You Trust What You See?</option>
+                <option value="track2">💳 Track 02: Survive the Money Game</option>
+                <option value="track3">🌱 Track 03: From Soil to Shelf</option>
+                <option value="track4">♿ Track 04: Technology Without Barriers</option>
+                <option value="track5">🤖 Track 05: Make the Impossible Routine</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="reg-experience">EXPERIENCE LEVEL <span class="req">*</span></label>
+              <select id="reg-experience" name="experience" required class="arcade-input arcade-select">
+                <option value="first">Level 1: First-time Hacker</option>
+                <option value="intermediate">Level 2: 1-3 Hackathons</option>
+                <option value="veteran">Level 3: Seasoned Veteran</option>
+              </select>
+            </div>
+
+            <div class="form-group full-width">
+              <label for="reg-github">GITHUB OR PORTFOLIO URL</label>
+              <input type="url" id="reg-github" name="github" placeholder="https://github.com/username" class="arcade-input" />
+            </div>
+
+            <div class="form-group full-width">
+              <label for="reg-dietary">DIETARY RESTRICTIONS &amp; T-SHIRT SIZE</label>
+              <input type="text" id="reg-dietary" name="dietary" placeholder="e.g. Vegetarian / Size L" class="arcade-input" />
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button type="submit" class="arcade-btn arcade-btn-pink w-full arcade-btn-lg" id="submit-reg-btn">
+              <span class="btn-scanline"></span>
+              <span class="btn-text">CONFIRM REGISTRATION [PRESS ENTER]</span>
+              <span class="btn-icon">🚀</span>
+            </button>
+          </div>
+        </form>
+
+        <!-- REGISTRATION CONFIRMATION TICKET (Displayed after submit) -->
+        <div id="registration-ticket" class="registration-ticket hidden">
+          <div class="ticket-header">
+            <span class="ticket-status">🎉 MISSION ACCEPTED</span>
+            <span class="ticket-id" id="ticket-id-display">TN27-8492</span>
+          </div>
+          <div class="ticket-body">
+            <h4 class="ticket-welcome">WELCOME TO THE ARENA, <span id="ticket-name-display" class="text-pink">HACKER</span>!</h4>
+            <p>Your spot has been reserved for TECHNOVA 2027. We've sent your entry pass and Discord invitation to your email.</p>
+            <div class="ticket-meta-grid">
+              <div><strong>EVENT:</strong> TECHNOVA 2027</div>
+              <div><strong>DATES:</strong> MARCH 12-13, 2027</div>
+              <div><strong>LOCATION:</strong> TECH ARENA</div>
+              <div><strong>TEAM:</strong> <span id="ticket-team-display">TEAM</span></div>
+            </div>
+          </div>
+          <div class="ticket-footer">
+            <button id="close-ticket-btn" class="arcade-btn arcade-btn-yellow w-full">
+              <span class="btn-text">GOT IT! LET'S HACK</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MISSION SPECS MODAL (For Track Details) -->
+    <div class="modal-backdrop hidden" id="track-modal" role="dialog" aria-modal="true">
+      <div class="modal-box">
+        <div class="modal-header">
+          <div class="modal-title-wrap">
+            <span class="modal-pixel-icon" id="track-modal-icon">🤖</span>
+            <h3 id="track-modal-title" class="modal-title">TRACK MISSION BRIEF</h3>
+          </div>
+          <button class="modal-close-btn" id="track-modal-close-btn" aria-label="Close track modal">✕</button>
+        </div>
+        <div class="modal-content-body" id="track-modal-body">
+          <!-- Dynamic content loaded via JS -->
+        </div>
+      </div>
+    </div>
+
+    <!-- SCRIPTS -->
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
