@@ -114,45 +114,6 @@ body:not(.crt-enabled) .crt-overlay {
   opacity: 0;
 }
 
-/* HUD Audio / CRT Floating Controls */
-.hud-controls {
-  position: fixed;
-  bottom: 24px;
-  left: 24px;
-  display: flex;
-  gap: 10px;
-  z-index: 100;
-}
-
-.hud-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 12px;
-  background: rgba(13, 13, 18, 0.85);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-sm);
-  color: var(--text-muted);
-  font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 700;
-  cursor: pointer;
-  backdrop-filter: blur(8px);
-  transition: all var(--transition-fast);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
-}
-
-.hud-btn:hover {
-  color: var(--text-white);
-  border-color: var(--neon-pink);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 16px var(--neon-pink-glow);
-}
-
-.hud-btn.active {
-  color: var(--electric-yellow);
-  border-color: var(--electric-yellow);
-}
 
 /* ==========================================================================
    NAVIGATION BAR
@@ -546,38 +507,6 @@ body:not(.crt-enabled) .crt-overlay {
   display: block;
 }
 
-.scene-hint {
-  position: absolute;
-  top: calc(var(--nav-height) + 16px);
-  right: 24px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-family: var(--font-mono);
-  font-size: 10px;
-  color: var(--text-dim);
-  background: rgba(13, 13, 18, 0.6);
-  padding: 6px 12px;
-  border-radius: var(--radius-sm);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(6px);
-  z-index: 5;
-  pointer-events: none;
-}
-
-.hint-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--electric-yellow);
-  box-shadow: 0 0 6px var(--electric-yellow);
-  animation: pulseDot 2s infinite;
-}
-
-@keyframes pulseDot {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.4; transform: scale(0.8); }
-}
 
 /* Ambient Radial Glows */
 .hero-ambient-glow {
@@ -2772,9 +2701,6 @@ body:not(.crt-enabled) .crt-overlay {
   :root {
     --nav-height: 64px;
   }
-  .scene-hint {
-    display: none;
-  }
   .hero-stats-bar {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -2857,10 +2783,6 @@ body:not(.crt-enabled) .crt-overlay {
   }
   .footer-top {
     grid-template-columns: 1fr;
-  }
-  .hud-controls {
-    bottom: 16px;
-    left: 16px;
   }
   .arcade-btn-lg, .arcade-btn-xl {
     padding: 12px 20px;

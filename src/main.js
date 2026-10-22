@@ -21,44 +21,6 @@ document.addEventListener('DOMContentLoaded', () => {
   // 2. INITIALIZE 2D RETRO ARCADE MINIGAME
   const minigame = new ArcadeMinigame();
 
-  // 3. AUDIO SFX TOGGLE HUD
-  const sfxBtn = document.getElementById('sfx-toggle-btn');
-  if (sfxBtn) {
-    const updateSfxBtn = (isEnabled) => {
-      sfxBtn.setAttribute('aria-pressed', isEnabled);
-      const icon = sfxBtn.querySelector('.hud-icon');
-      const label = sfxBtn.querySelector('.hud-label');
-      if (icon) icon.textContent = isEnabled ? '🔊' : '🔇';
-      if (label) label.textContent = isEnabled ? 'SFX: ON' : 'SFX: OFF';
-      if (isEnabled) sfxBtn.classList.add('active');
-      else sfxBtn.classList.remove('active');
-    };
-
-    updateSfxBtn(arcadeAudio.enabled);
-
-    sfxBtn.addEventListener('click', () => {
-      const isEnabled = arcadeAudio.toggle();
-      updateSfxBtn(isEnabled);
-    });
-  }
-
-  // 4. CRT SCANLINE TOGGLE HUD
-  const crtBtn = document.getElementById('crt-toggle-btn');
-  if (crtBtn) {
-    let crtEnabled = true;
-    crtBtn.addEventListener('click', () => {
-      arcadeAudio.playBlip();
-      crtEnabled = !crtEnabled;
-      document.body.classList.toggle('crt-enabled', crtEnabled);
-      crtBtn.setAttribute('aria-pressed', crtEnabled);
-      const icon = crtBtn.querySelector('.hud-icon');
-      const label = crtBtn.querySelector('.hud-label');
-      if (icon) icon.textContent = crtEnabled ? '📺' : '⬛';
-      if (label) label.textContent = crtEnabled ? 'CRT: ON' : 'CRT: OFF';
-      if (crtEnabled) crtBtn.classList.add('active');
-      else crtBtn.classList.remove('active');
-    });
-  }
 
   // 5. ATTACH SOUNDS TO BUTTONS & LINKS
   document.querySelectorAll('.arcade-btn').forEach((btn) => {
