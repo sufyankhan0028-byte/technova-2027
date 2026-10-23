@@ -14,8 +14,8 @@ import * as THREE from 'three';
 
 export class RetroArcadeScene {
   constructor(canvasId) {
+    this.canvasId = canvasId;
     this.canvas = document.getElementById(canvasId);
-    if (!this.canvas) return;
 
     this.scene = null;
     this.camera = null;
@@ -29,10 +29,26 @@ export class RetroArcadeScene {
     // Sound callback (can be assigned externally)
     this.onObjectClick = null;
 
+    if (!this.canvas) {
+      if (document.readyState === 'loading') {
+        window.addEventListener('DOMContentLoaded', () => {
+          this.canvas = document.getElementById(this.canvasId);
+          if (this.canvas && !this.scene) {
+            this.init();
+          }
+        });
+      }
+      return;
+    }
+
     this.init();
   }
 
   init() {
+    if (!this.canvas) {
+      this.canvas = document.getElementById(this.canvasId || 'three-canvas');
+      if (!this.canvas) return;
+    }
     // 1. SCENE SETUP
     this.scene = new THREE.Scene();
     this.scene.fog = new THREE.FogExp2(0x070707, 0.04);
@@ -448,6 +464,7 @@ export class RetroArcadeScene {
     ctx.fillText('?', 64, 68);
 
     const qTexture = new THREE.CanvasTexture(canvas);
+    qTexture.needsUpdate = true;
     const qMat = new THREE.MeshBasicMaterial({ map: qTexture });
     const qPlane = new THREE.Mesh(new THREE.PlaneGeometry(1.2, 1.2), qMat);
     qPlane.position.z = 0.71;
