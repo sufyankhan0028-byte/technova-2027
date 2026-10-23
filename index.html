@@ -23,6 +23,15 @@
 
     <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
     <link rel="stylesheet" href="./src/style.css" />
+    <script>
+      // Prevent mobile/desktop browsers from auto-restoring scroll position
+      if ('scrollRestoration' in history) {
+        history.scrollRestoration = 'manual';
+      }
+      if (!window.location.hash || window.location.hash === '#' || window.location.hash === '#top' || window.location.hash === '#hero' || window.location.hash === '#arcade-zone') {
+        window.scrollTo(0, 0);
+      }
+    </script>
   </head>
   <body class="crt-enabled">
     <!-- Retro CRT scanline and vignette overlay -->
@@ -847,7 +856,7 @@
             </button>
             <div class="faq-answer">
               <p>
-                TECHNOVA 2027 is open to all enrolled undergraduate and graduate students from any accredited college or university worldwide. Recent graduates (within 1 year of graduation) and high school seniors aged 18+ are also warmly welcome!
+                TECHNOVA 2027 is open to currently enrolled undergraduate (UG) and postgraduate (PG) students from recognized colleges or universities. Every participant must carry a valid college ID card for verification. Pass-outs and high school students are not eligible.
               </p>
             </div>
           </div>
@@ -899,7 +908,7 @@
             </button>
             <div class="faq-answer">
               <p>
-                No. In accordance with fair-play arcade guidelines, all project source code, design assets, and functional logic must be written fresh during the official 24-hour hackathon window. You are free to use open-source libraries, APIs, and frameworks.
+                No. In accordance with fair-play arcade guidelines, all project source code, design assets, and functional logic must be written fresh during the official 8-hour hackathon window. You are free to use open-source libraries, APIs, and frameworks.
               </p>
             </div>
           </div>

@@ -37,6 +37,8 @@ export class ArcadeMinigame {
     this.lastDisplayedSecond = 30;
     this.speedTimer = 0;
     this.speedMultiplier = 1;
+    this.gameLoopId = null;
+    this.lastStartTimestamp = 0;
     this.highScore = parseInt(localStorage.getItem('technova_hiscore') || '500', 10);
     this.items = [];
     this.popups = [];
@@ -60,19 +62,74 @@ export class ArcadeMinigame {
   init() {
     this.updateHUD();
 
-    // Start & Restart Listeners
+    // Start & Restart Listeners with touch support and duplicate prevention
+    const handleStartTrigger = (e) => {
+      if (e) {
+        if (e.cancelable && e.type && e.type.startsWith('touch')) {
+          e.preventDefault();
+        }
+      }
+      const now = Date.now();
+      if (now - this.lastStartTimestamp < 350) return;
+      this.lastStartTimestamp = now;
+
+      arcadeAudio.playCoin();
+      this.startGame();
+    };
+
     if (this.startBtn) {
-      this.startBtn.addEventListener('click', () => {
-        arcadeAudio.playCoin();
-        this.startGame();
-      });
+      this.startBtn.addEventListener('click', handleStartTrigger);
+      this.startBtn.addEventListener('touchend', handleStartTrigger, { passive: false });
     }
 
     if (this.restartBtn) {
-      this.restartBtn.addEventListener('click', () => {
-        arcadeAudio.playCoin();
-        this.startGame();
+      this.restartBtn.addEventListener('click', handleStartTrigger);
+      this.restartBtn.addEventListener('touchend', handleStartTrigger, { passive: false });
+    }
+
+    if (this.startScreen) {
+      this.startScreen.addEventListener('click', handleStartTrigger);
+      this.startScreen.addEventListener('touchend', handleStartTrigger, { passive: false });
+    }
+
+    if (this.gameoverScreen) {
+      this.gameoverScreen.addEventListener('click', handleStartTrigger);
+      this.gameoverScreen.addEventListener('touchend', handleStartTrigger, { passive: false });
+    }
+
+    if (this.canvas) {
+      this.canvas.addEventListener('click', () => {
+        if (!this.isRunning) handleStartTrigger();
       });
+      this.canvas.addEventListener('touchend', (e) => {
+        if (!this.isRunning) handleStartTrigger(e);
+      }, { passive: false });
+    }
+
+    // Tapping coin slot or screen wrap also starts the arcade machine
+    const coinSlot = document.querySelector('.coin-slot');
+    if (coinSlot) {
+      coinSlot.style.cursor = 'pointer';
+      coinSlot.addEventListener('click', () => {
+        if (!this.isRunning) handleStartTrigger();
+      });
+      coinSlot.addEventListener('touchend', (e) => {
+        if (!this.isRunning) handleStartTrigger(e);
+      }, { passive: false });
+    }
+
+    const screenWrap = document.querySelector('.cabinet-screen-wrap');
+    if (screenWrap) {
+      screenWrap.addEventListener('click', (e) => {
+        if (!this.isRunning && e.target !== this.startBtn && e.target !== this.restartBtn) {
+          handleStartTrigger(e);
+        }
+      });
+      screenWrap.addEventListener('touchend', (e) => {
+        if (!this.isRunning && e.target !== this.startBtn && e.target !== this.restartBtn) {
+          handleStartTrigger(e);
+        }
+      }, { passive: false });
     }
 
     // Keyboard controls
@@ -95,28 +152,97 @@ export class ArcadeMinigame {
       }
     });
 
-    // Touch / Onscreen button controls
-    if (this.leftBtn) {
-      this.leftBtn.addEventListener('mousedown', () => (this.player.movingLeft = true));
-      this.leftBtn.addEventListener('mouseup', () => (this.player.movingLeft = false));
-      this.leftBtn.addEventListener('touchstart', (e) => { e.preventDefault(); this.player.movingLeft = true; });
-      this.leftBtn.addEventListener('touchend', (e) => { e.preventDefault(); this.player.movingLeft = false; });
-    }
+    // Touch & Pointer Onscreen Button Controls with Pointer Capture
+    const bindHoldButton = (btn, onStart, onEnd) => {
+      if (!btn) return;
 
-    if (this.rightBtn) {
-      this.rightBtn.addEventListener('mousedown', () => (this.player.movingRight = true));
-      this.rightBtn.addEventListener('mouseup', () => (this.player.movingRight = false));
-      this.rightBtn.addEventListener('touchstart', (e) => { e.preventDefault(); this.player.movingRight = true; });
-      this.rightBtn.addEventListener('touchend', (e) => { e.preventDefault(); this.player.movingRight = false; });
-    }
+      btn.addEventListener('pointerdown', (e) => {
+        try {
+          btn.setPointerCapture(e.pointerId);
+        } catch {}
+        onStart();
+      });
 
-    // Mouse direct follow on canvas
-    this.canvas.addEventListener('mousemove', (e) => {
+      btn.addEventListener('pointerup', (e) => {
+        try {
+          btn.releasePointerCapture(e.pointerId);
+        } catch {}
+        onEnd();
+      });
+
+      btn.addEventListener('pointercancel', (e) => {
+        try {
+          btn.releasePointerCapture(e.pointerId);
+        } catch {}
+        onEnd();
+      });
+
+      btn.addEventListener('touchstart', (e) => {
+        if (e.cancelable) e.preventDefault();
+        onStart();
+      }, { passive: false });
+
+      btn.addEventListener('touchend', (e) => {
+        if (e.cancelable) e.preventDefault();
+        onEnd();
+      }, { passive: false });
+
+      btn.addEventListener('touchcancel', (e) => {
+        if (e.cancelable) e.preventDefault();
+        onEnd();
+      }, { passive: false });
+
+      btn.addEventListener('mousedown', (e) => {
+        if (e.button === 0) onStart();
+      });
+      btn.addEventListener('mouseup', () => onEnd());
+      btn.addEventListener('mouseleave', () => onEnd());
+    };
+
+    bindHoldButton(this.leftBtn, () => { this.player.movingLeft = true; }, () => { this.player.movingLeft = false; });
+    bindHoldButton(this.rightBtn, () => { this.player.movingRight = true; }, () => { this.player.movingRight = false; });
+
+    // Touch & Mouse direct follow on canvas
+    const updatePlayerPosition = (clientX) => {
       if (!this.isRunning) return;
       const rect = this.canvas.getBoundingClientRect();
+      if (!rect.width) return;
       const scaleX = this.canvas.width / rect.width;
-      const mouseX = (e.clientX - rect.left) * scaleX;
-      this.player.x = Math.max(0, Math.min(this.canvas.width - this.player.width, mouseX - this.player.width / 2));
+      const touchX = (clientX - rect.left) * scaleX;
+      this.player.x = Math.max(0, Math.min(this.canvas.width - this.player.width, touchX - this.player.width / 2));
+    };
+
+    this.canvas.addEventListener('mousemove', (e) => {
+      if (!this.isRunning) return;
+      updatePlayerPosition(e.clientX);
+    });
+
+    this.canvas.addEventListener('touchstart', (e) => {
+      if (!this.isRunning) return;
+      if (e.touches && e.touches[0]) {
+        e.preventDefault();
+        updatePlayerPosition(e.touches[0].clientX);
+      }
+    }, { passive: false });
+
+    this.canvas.addEventListener('touchmove', (e) => {
+      if (!this.isRunning) return;
+      if (e.touches && e.touches[0]) {
+        e.preventDefault();
+        updatePlayerPosition(e.touches[0].clientX);
+      }
+    }, { passive: false });
+
+    window.addEventListener('blur', () => {
+      this.player.movingLeft = false;
+      this.player.movingRight = false;
+    });
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) {
+        this.player.movingLeft = false;
+        this.player.movingRight = false;
+      }
     });
 
     // Initial idle draw
@@ -124,6 +250,11 @@ export class ArcadeMinigame {
   }
 
   startGame() {
+    if (this.gameLoopId) {
+      cancelAnimationFrame(this.gameLoopId);
+      this.gameLoopId = null;
+    }
+
     this.score = 0;
     this.lives = 1;
     this.timeLeft = 30;
@@ -135,6 +266,8 @@ export class ArcadeMinigame {
     this.popups = [];
     this.player.x = this.canvas.width / 2 - 20;
     this.player.speed = 6;
+    this.player.movingLeft = false;
+    this.player.movingRight = false;
     this.isRunning = true;
 
     if (this.overlay) this.overlay.classList.add('hidden');
@@ -143,11 +276,17 @@ export class ArcadeMinigame {
 
     this.updateHUD();
     this.lastTime = performance.now();
-    requestAnimationFrame(this.gameLoop.bind(this));
+    this.gameLoopId = requestAnimationFrame(this.gameLoop.bind(this));
   }
 
   gameOver() {
     this.isRunning = false;
+    if (this.gameLoopId) {
+      cancelAnimationFrame(this.gameLoopId);
+      this.gameLoopId = null;
+    }
+    this.player.movingLeft = false;
+    this.player.movingRight = false;
     arcadeAudio.playGameOver();
 
     if (this.score > this.highScore) {
@@ -331,7 +470,7 @@ export class ArcadeMinigame {
     // RENDER FRAME
     this.draw();
 
-    requestAnimationFrame(this.gameLoop.bind(this));
+    this.gameLoopId = requestAnimationFrame(this.gameLoop.bind(this));
   }
 
   draw() {

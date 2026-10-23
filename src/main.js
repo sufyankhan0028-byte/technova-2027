@@ -3,11 +3,66 @@ import { RetroArcadeScene } from './three-scene.js';
 import { arcadeAudio } from './audio.js';
 import { ArcadeMinigame } from './minigame.js';
 
+// Ensure mobile and desktop browsers do not restore scroll position automatically to the arcade cabinet
+if (typeof history !== 'undefined' && 'scrollRestoration' in history) {
+  history.scrollRestoration = 'manual';
+}
+
+function handleInitialScrollPosition() {
+  const hash = window.location.hash;
+  const isReload = () => {
+    try {
+      const navEntries = performance.getEntriesByType('navigation');
+      if (navEntries && navEntries.length > 0) {
+        return navEntries[0].type === 'reload';
+      }
+      return performance.navigation && performance.navigation.type === 1;
+    } catch {
+      return false;
+    }
+  };
+
+  const reloading = isReload();
+
+  // If reloading or opening root URL (no hash, or #hero/#top) or if initial load landed on #arcade-zone:
+  if (reloading || !hash || hash === '#' || hash === '#top' || hash === '#hero' || hash === '#arcade-zone') {
+    if (hash === '#arcade-zone') {
+      history.replaceState(null, document.title, window.location.pathname + window.location.search);
+    }
+    window.scrollTo(0, 0);
+    requestAnimationFrame(() => {
+      window.scrollTo(0, 0);
+    });
+  } else if (hash) {
+    // Preserve intentional deep-link to other sections (e.g. #tracks, #schedule, #prizes, #sponsors, #faq)
+    const target = document.querySelector(hash);
+    if (target) {
+      setTimeout(() => {
+        target.scrollIntoView({ behavior: 'smooth' });
+      }, 100);
+    }
+  }
+}
+
+// Preserve top position across back/forward cache restorations on mobile
+window.addEventListener('pageshow', (e) => {
+  const hash = window.location.hash;
+  if (!hash || hash === '#' || hash === '#top' || hash === '#hero' || hash === '#arcade-zone' || e.persisted) {
+    if (hash === '#arcade-zone') {
+      history.replaceState(null, document.title, window.location.pathname + window.location.search);
+    }
+    window.scrollTo(0, 0);
+  }
+});
+
 /**
  * TECHNOVA 2027 — MAIN APPLICATION LOGIC
  */
 
 function initApp() {
+  // Ensure page begins at the top on mobile/desktop root open
+  handleInitialScrollPosition();
+
   // 1. INITIALIZE 3D ARCADE HERO EXPERIENCE
   const heroScene = new RetroArcadeScene('three-canvas');
   if (heroScene) {
@@ -663,6 +718,18 @@ function initApp() {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     });
   }
+
+  // 16. INTENTIONAL NAVIGATION TO RETRO ARCADE ZONE
+  document.querySelectorAll('a[href="#arcade-zone"]').forEach((link) => {
+    link.addEventListener('click', (e) => {
+      const arcadeZone = document.getElementById('arcade-zone');
+      if (arcadeZone) {
+        e.preventDefault();
+        history.pushState(null, '', '#arcade-zone');
+        arcadeZone.scrollIntoView({ behavior: 'smooth' });
+      }
+    });
+  });
 
   console.log('👾 [TECHNOVA 2027] Retro Arcade Systems Operational.');
 }
