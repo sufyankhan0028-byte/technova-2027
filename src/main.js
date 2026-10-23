@@ -1,7 +1,4 @@
-import confetti from 'canvas-confetti';
-import { RetroArcadeScene } from './three-scene.js';
 import { arcadeAudio } from './audio.js';
-import { ArcadeMinigame } from './minigame.js';
 
 // Ensure mobile and desktop browsers do not restore scroll position automatically to the arcade cabinet
 if (typeof history !== 'undefined' && 'scrollRestoration' in history) {
@@ -55,6 +52,61 @@ window.addEventListener('pageshow', (e) => {
   }
 });
 
+// Lazy-loaded component singletons
+let heroSceneInstance = null;
+let minigameInstance = null;
+let minigameLoadPromise = null;
+
+function load3DHeroScene() {
+  const canvas = document.getElementById('three-canvas');
+  if (!canvas || heroSceneInstance) return;
+
+  import('./three-scene.js')
+    .then(({ RetroArcadeScene }) => {
+      if (!heroSceneInstance) {
+        heroSceneInstance = new RetroArcadeScene('three-canvas');
+        if (heroSceneInstance) {
+          heroSceneInstance.onObjectClick = (objName) => {
+            arcadeAudio.playPowerup();
+            console.log(`[3D Arcade] Popped: ${objName}`);
+          };
+        }
+      }
+    })
+    .catch((err) => {
+      console.warn('[3D Arcade] Deferred 3D scene failed to load:', err);
+    });
+}
+
+function loadMinigame(autoStart = false) {
+  if (minigameInstance) {
+    if (autoStart) minigameInstance.startGame();
+    return Promise.resolve(minigameInstance);
+  }
+
+  if (minigameLoadPromise) {
+    return minigameLoadPromise.then((instance) => {
+      if (instance && autoStart) instance.startGame();
+      return instance;
+    });
+  }
+
+  minigameLoadPromise = import('./minigame.js')
+    .then(({ ArcadeMinigame }) => {
+      minigameInstance = new ArcadeMinigame();
+      if (autoStart && minigameInstance) {
+        minigameInstance.startGame();
+      }
+      return minigameInstance;
+    })
+    .catch((err) => {
+      minigameLoadPromise = null;
+      console.warn('[Minigame] Lazy load error:', err);
+    });
+
+  return minigameLoadPromise;
+}
+
 /**
  * TECHNOVA 2027 — MAIN APPLICATION LOGIC
  */
@@ -63,18 +115,33 @@ function initApp() {
   // Ensure page begins at the top on mobile/desktop root open
   handleInitialScrollPosition();
 
-  // 1. INITIALIZE 3D ARCADE HERO EXPERIENCE
-  const heroScene = new RetroArcadeScene('three-canvas');
-  if (heroScene) {
-    heroScene.onObjectClick = (objName) => {
-      arcadeAudio.playPowerup();
-      // Temporary badge notification or console feedback
-      console.log(`[3D Arcade] Popped: ${objName}`);
-    };
+  // 1. DEFERRED 3D ARCADE HERO EXPERIENCE (Loads without blocking FCP/TTI)
+  if (typeof requestIdleCallback !== 'undefined') {
+    requestIdleCallback(() => load3DHeroScene(), { timeout: 1200 });
+  } else {
+    setTimeout(() => load3DHeroScene(), 60);
   }
 
-  // 2. INITIALIZE 2D RETRO ARCADE MINIGAME
-  const minigame = new ArcadeMinigame();
+  // 2. LAZY-LOAD 2D RETRO ARCADE MINIGAME (When approaching #arcade-zone or on direct interaction)
+  const arcadeZoneSection = document.getElementById('arcade-zone');
+  if (arcadeZoneSection && typeof IntersectionObserver !== 'undefined') {
+    const gameObserver = new IntersectionObserver((entries) => {
+      if (entries[0].isIntersecting) {
+        loadMinigame(false);
+        gameObserver.disconnect();
+      }
+    }, { rootMargin: '300px' });
+    gameObserver.observe(arcadeZoneSection);
+  }
+
+  const cabinetEl = document.querySelector('.arcade-cabinet-frame');
+  if (cabinetEl) {
+    const triggerGameLoad = () => {
+      loadMinigame(false);
+    };
+    cabinetEl.addEventListener('click', triggerGameLoad, { once: true });
+    cabinetEl.addEventListener('touchend', triggerGameLoad, { once: true, passive: true });
+  }
 
 
   // 5. ATTACH SOUNDS TO BUTTONS & LINKS
@@ -653,30 +720,32 @@ function initApp() {
       // Audio celebration
       arcadeAudio.playVictory();
 
-      // Confetti Blast
-      confetti({
-        particleCount: 120,
-        spread: 80,
-        origin: { y: 0.6 },
-        colors: ['#ff007a', '#ffc400', '#38bdf8', '#ffffff']
-      });
+      // Confetti Blast (Loaded on demand upon ticket generation)
+      import('canvas-confetti').then(({ default: confetti }) => {
+        confetti({
+          particleCount: 120,
+          spread: 80,
+          origin: { y: 0.6 },
+          colors: ['#ff007a', '#ffc400', '#38bdf8', '#ffffff']
+        });
 
-      setTimeout(() => {
-        confetti({
-          particleCount: 60,
-          angle: 60,
-          spread: 55,
-          origin: { x: 0 },
-          colors: ['#ff007a', '#ffc400']
-        });
-        confetti({
-          particleCount: 60,
-          angle: 120,
-          spread: 55,
-          origin: { x: 1 },
-          colors: ['#ff007a', '#ffc400']
-        });
-      }, 250);
+        setTimeout(() => {
+          confetti({
+            particleCount: 60,
+            angle: 60,
+            spread: 55,
+            origin: { x: 0 },
+            colors: ['#ff007a', '#ffc400']
+          });
+          confetti({
+            particleCount: 60,
+            angle: 120,
+            spread: 55,
+            origin: { x: 1 },
+            colors: ['#ff007a', '#ffc400']
+          });
+        }, 250);
+      }).catch((e) => console.warn('[Confetti] Load error:', e));
 
       // Populate Ticket
       if (ticketIdDisplay) ticketIdDisplay.textContent = ticketId;
@@ -703,9 +772,7 @@ function initApp() {
       const arcadeZone = document.getElementById('arcade-zone');
       if (arcadeZone) {
         arcadeZone.scrollIntoView({ behavior: 'smooth' });
-        setTimeout(() => {
-          minigame.startGame();
-        }, 600);
+        loadMinigame(true);
       }
     });
   }
@@ -727,6 +794,7 @@ function initApp() {
         e.preventDefault();
         history.pushState(null, '', '#arcade-zone');
         arcadeZone.scrollIntoView({ behavior: 'smooth' });
+        loadMinigame(false);
       }
     });
   });

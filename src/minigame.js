@@ -242,6 +242,15 @@ export class ArcadeMinigame {
       if (document.hidden) {
         this.player.movingLeft = false;
         this.player.movingRight = false;
+        if (this.isRunning && this.gameLoopId) {
+          cancelAnimationFrame(this.gameLoopId);
+          this.gameLoopId = null;
+          this.wasRunningBeforeHidden = true;
+        }
+      } else if (this.wasRunningBeforeHidden && this.isRunning) {
+        this.wasRunningBeforeHidden = false;
+        this.lastTime = performance.now();
+        this.gameLoopId = requestAnimationFrame(this.gameLoop.bind(this));
       }
     });
 

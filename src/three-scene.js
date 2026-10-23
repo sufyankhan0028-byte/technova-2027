@@ -26,6 +26,21 @@ export class RetroArcadeScene {
     this.interactiveObjects = [];
     this.clock = new THREE.Clock();
 
+    // Mobile & accessibility detection
+    this.isMobile = typeof window !== 'undefined' && (
+      window.innerWidth <= 768 ||
+      /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent || '')
+    );
+    this.prefersReducedMotion = typeof window !== 'undefined' && (
+      window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    );
+
+    // State tracking for single animation loop and off-screen pause
+    this.isRunning = false;
+    this.isVisible = true;
+    this.isTabVisible = typeof document !== 'undefined' ? !document.hidden : true;
+    this.animationFrameId = null;
+
     // Sound callback (can be assigned externally)
     this.onObjectClick = null;
 
@@ -68,12 +83,12 @@ export class RetroArcadeScene {
     try {
       this.renderer = new THREE.WebGLRenderer({
         canvas: this.canvas,
-        antialias: true,
+        antialias: !this.isMobile, // antialias on desktop, save GPU power on mobile
         alpha: true,
-        powerPreference: 'high-performance'
+        powerPreference: this.isMobile ? 'default' : 'high-performance'
       });
     } catch (err) {
-      console.warn('[3D Arcade] WebGLRenderer high-perf creation failed, attempting fallback:', err);
+      console.warn('[3D Arcade] WebGLRenderer creation fallback:', err);
       try {
         this.renderer = new THREE.WebGLRenderer({
           canvas: this.canvas,
@@ -86,8 +101,10 @@ export class RetroArcadeScene {
       }
     }
 
-    this.renderer.setSize(width, height);
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    this.renderer.setSize(width, height, false);
+    // On mobile devices, cap DPR at 1.0 to prevent fragment fillrate throttling
+    const maxDPR = this.isMobile ? 1.0 : (window.devicePixelRatio > 1.75 ? 1.75 : (window.devicePixelRatio || 1));
+    this.renderer.setPixelRatio(maxDPR);
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
     this.renderer.toneMappingExposure = 1.2;
 
@@ -120,8 +137,9 @@ export class RetroArcadeScene {
       this.onResize();
     }, 100);
 
-    // 7. START RENDER LOOP
-    this.animate();
+    // 7. SETUP VISIBILITY TRACKING & START RENDER LOOP
+    this.setupVisibilityTracking();
+    this.startAnimation();
   }
 
   setupLighting() {
@@ -144,10 +162,12 @@ export class RetroArcadeScene {
     this.yellowLight.position.set(8, -2, 4);
     this.scene.add(this.yellowLight);
 
-    // Electric Blue Rim Light (Center Bottom)
-    const blueLight = new THREE.PointLight(0x38bdf8, 2.5, 25);
-    blueLight.position.set(0, -6, 2);
-    this.scene.add(blueLight);
+    // Electric Blue Rim Light (Center Bottom) - skip on mobile to save fragment shading
+    if (!this.isMobile) {
+      const blueLight = new THREE.PointLight(0x38bdf8, 2.5, 25);
+      blueLight.position.set(0, -6, 2);
+      this.scene.add(blueLight);
+    }
   }
 
   // 1. 3D PIXEL GHOST (Pac-Man Inspired with animated eyes)
@@ -529,7 +549,8 @@ export class RetroArcadeScene {
 
   // 7. 3D PARTICLE STARFIELD (Floating ambient cyber dust)
   createStarfield() {
-    const particleCount = 280;
+    // 80 particles on mobile vs 280 on desktop to dramatically cut vertex processing
+    const particleCount = this.isMobile ? 80 : 280;
     const geometry = new THREE.BufferGeometry();
     const positions = new Float32Array(particleCount * 3);
     const colors = new Float32Array(particleCount * 3);
@@ -556,7 +577,7 @@ export class RetroArcadeScene {
     geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
 
     const material = new THREE.PointsMaterial({
-      size: 0.12,
+      size: this.isMobile ? 0.16 : 0.12,
       vertexColors: true,
       transparent: true,
       opacity: 0.85,
@@ -567,7 +588,54 @@ export class RetroArcadeScene {
     this.scene.add(this.starfield);
   }
 
-  // EVENT HANDLERS
+  // EVENT HANDLERS & VISIBILITY MANAGEMENT
+  setupVisibilityTracking() {
+    const heroSection = document.getElementById('hero') || (this.canvas ? this.canvas.parentElement : null);
+    if (heroSection && typeof IntersectionObserver !== 'undefined') {
+      this.intersectionObserver = new IntersectionObserver((entries) => {
+        for (const entry of entries) {
+          this.isVisible = entry.isIntersecting;
+          this.updateAnimationState();
+        }
+      }, { threshold: 0.02 });
+      this.intersectionObserver.observe(heroSection);
+    }
+
+    document.addEventListener('visibilitychange', () => {
+      this.isTabVisible = !document.hidden;
+      this.updateAnimationState();
+    });
+  }
+
+  updateAnimationState() {
+    const shouldRun = this.isVisible && this.isTabVisible;
+    if (shouldRun && !this.isRunning) {
+      this.startAnimation();
+    } else if (!shouldRun && this.isRunning) {
+      this.stopAnimation();
+    }
+  }
+
+  startAnimation() {
+    if (this.isRunning) return;
+    this.isRunning = true;
+    if (this.clock) this.clock.start();
+    if (!this.animationFrameId) {
+      this.animationFrameId = requestAnimationFrame(this.animate.bind(this));
+    }
+  }
+
+  stopAnimation() {
+    this.isRunning = false;
+    if (this.animationFrameId) {
+      cancelAnimationFrame(this.animationFrameId);
+      this.animationFrameId = null;
+    }
+    if (this.clock) {
+      this.clock.stop();
+    }
+  }
+
   onResize() {
     if (!this.canvas || !this.camera || !this.renderer) return;
     const parent = this.canvas.parentElement;
@@ -580,11 +648,17 @@ export class RetroArcadeScene {
     const aspect = height > 0 ? width / height : 1.77;
     this.camera.aspect = aspect;
     this.camera.updateProjectionMatrix();
-    this.renderer.setSize(width, height);
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    this.renderer.setSize(width, height, false);
+    const isMobileDevice = width <= 768;
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, isMobileDevice ? 1.0 : 1.75));
+
+    if (!this.isRunning && this.scene && this.camera) {
+      this.renderer.render(this.scene, this.camera);
+    }
   }
 
   onMouseMove(e) {
+    if (this.isMobile) return; // Skip mouse parallax calculations on mobile touch devices
     // Normalized device coordinates (-1 to +1)
     const x = (e.clientX / window.innerWidth) * 2 - 1;
     const y = -(e.clientY / window.innerHeight) * 2 + 1;
@@ -644,8 +718,17 @@ export class RetroArcadeScene {
 
   // RENDER & ANIMATION LOOP
   animate() {
-    if (!this.renderer || !this.scene || !this.camera) return;
-    requestAnimationFrame(this.animate.bind(this));
+    if (!this.isRunning || !this.renderer || !this.scene || !this.camera) {
+      this.animationFrameId = null;
+      return;
+    }
+    this.animationFrameId = requestAnimationFrame(this.animate.bind(this));
+
+    // Respect reduced-motion preference
+    if (this.prefersReducedMotion) {
+      this.renderer.render(this.scene, this.camera);
+      return;
+    }
 
     if (!Number.isFinite(this.camera.aspect) || this.camera.aspect <= 0) {
       this.onResize();
@@ -654,13 +737,13 @@ export class RetroArcadeScene {
     const delta = this.clock.getDelta();
     const elapsedTime = this.clock.getElapsedTime();
 
-    // Smooth lerp mouse parallax
-    this.mouse.lerp(this.targetMouse, 0.05);
-
-    // Camera gentle tilt and parallax
-    this.camera.position.x = this.mouse.x * 1.4;
-    this.camera.position.y = this.mouse.y * 1.0;
-    this.camera.lookAt(0, 0, 0);
+    // Smooth lerp mouse parallax (desktop only)
+    if (!this.isMobile) {
+      this.mouse.lerp(this.targetMouse, 0.05);
+      this.camera.position.x = this.mouse.x * 1.4;
+      this.camera.position.y = this.mouse.y * 1.0;
+      this.camera.lookAt(0, 0, 0);
+    }
 
     // Dynamic light movement
     if (this.pinkLight) {
@@ -673,7 +756,9 @@ export class RetroArcadeScene {
     }
 
     // Animate interactive arcade models
-    this.interactiveObjects.forEach((obj, idx) => {
+    const objCount = this.interactiveObjects.length;
+    for (let idx = 0; idx < objCount; idx++) {
+      const obj = this.interactiveObjects[idx];
       const u = obj.userData;
       if (!u.isPopping) {
         // Floating sinusoidal bob
@@ -681,18 +766,21 @@ export class RetroArcadeScene {
 
         // Object Rotation & Sway
         if (u.oscillateY) {
-          // Keep front face forward with gentle cute sway
-          obj.rotation.y = u.baseRotY + Math.sin(elapsedTime * u.swaySpeed) * u.swayAngle + this.mouse.x * 0.25;
+          obj.rotation.y = u.baseRotY + Math.sin(elapsedTime * u.swaySpeed) * u.swayAngle + (this.isMobile ? 0 : this.mouse.x * 0.25);
         } else if (u.rotSpeedY) {
-          // Continuous 360 spin for coins and neon polyhedra
           obj.rotation.y += u.rotSpeedY;
         }
 
-        // Gentle tilt reaction to mouse
-        obj.rotation.x = Math.sin(elapsedTime * 1.0 + idx) * 0.08 + this.mouse.y * 0.15;
-        obj.rotation.z = Math.cos(elapsedTime * 0.8 + idx) * 0.08 - this.mouse.x * 0.15;
+        // Gentle tilt
+        if (!this.isMobile) {
+          obj.rotation.x = Math.sin(elapsedTime * 1.0 + idx) * 0.08 + this.mouse.y * 0.15;
+          obj.rotation.z = Math.cos(elapsedTime * 0.8 + idx) * 0.08 - this.mouse.x * 0.15;
+        } else {
+          obj.rotation.x = Math.sin(elapsedTime * 0.8 + idx) * 0.06;
+          obj.rotation.z = Math.cos(elapsedTime * 0.6 + idx) * 0.06;
+        }
       }
-    });
+    }
 
     // Starfield slow orbit
     if (this.starfield) {
