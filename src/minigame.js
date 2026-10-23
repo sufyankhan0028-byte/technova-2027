@@ -20,6 +20,7 @@ export class ArcadeMinigame {
     // HUD Elements
     this.hudScore = document.getElementById('hud-score');
     this.hudLives = document.getElementById('hud-lives');
+    this.hudTime = document.getElementById('hud-time');
     this.hudHigh = document.getElementById('hud-high');
     this.finalScoreEl = document.getElementById('final-score');
     this.highScoreEl = document.getElementById('high-score');
@@ -31,7 +32,11 @@ export class ArcadeMinigame {
     // State
     this.isRunning = false;
     this.score = 0;
-    this.lives = 3;
+    this.lives = 1;
+    this.timeLeft = 30;
+    this.lastDisplayedSecond = 30;
+    this.speedTimer = 0;
+    this.speedMultiplier = 1;
     this.highScore = parseInt(localStorage.getItem('technova_hiscore') || '500', 10);
     this.items = [];
     this.popups = [];
@@ -120,11 +125,16 @@ export class ArcadeMinigame {
 
   startGame() {
     this.score = 0;
-    this.lives = 3;
+    this.lives = 1;
+    this.timeLeft = 30;
+    this.lastDisplayedSecond = 30;
+    this.speedTimer = 0;
+    this.speedMultiplier = 1;
     this.difficulty = 1;
     this.items = [];
     this.popups = [];
     this.player.x = this.canvas.width / 2 - 20;
+    this.player.speed = 6;
     this.isRunning = true;
 
     if (this.overlay) this.overlay.classList.add('hidden');
@@ -163,6 +173,19 @@ export class ArcadeMinigame {
       for (let i = 0; i < this.lives; i++) hearts += '❤️';
       this.hudLives.textContent = hearts || '💀';
     }
+    if (this.hudTime) {
+      this.hudTime.textContent = Math.ceil(Math.max(0, this.timeLeft));
+    }
+  }
+
+  increaseGameSpeed() {
+    const factor = 1.06;
+    this.speedMultiplier = Math.min(2.2, this.speedMultiplier * factor);
+    this.player.speed = Math.min(10, this.player.speed * 1.04);
+    for (let item of this.items) {
+      item.speed *= factor;
+    }
+    this.difficulty = Math.min(5, this.difficulty + 0.25);
   }
 
   spawnItem() {
@@ -195,7 +218,7 @@ export class ArcadeMinigame {
       emoji: chosen.emoji,
       points: chosen.points,
       color: chosen.color,
-      speed: chosen.speed * (1 + (this.difficulty - 1) * 0.15)
+      speed: chosen.speed * this.speedMultiplier
     });
   }
 
@@ -213,6 +236,35 @@ export class ArcadeMinigame {
   gameLoop(timestamp) {
     if (!this.isRunning) return;
 
+    const now = timestamp || performance.now();
+    const dt = Math.min((now - (this.lastTime || now)) / 1000, 0.1);
+    this.lastTime = now;
+
+    // 30-Second Countdown Timer
+    this.timeLeft -= dt;
+    if (this.timeLeft <= 0) {
+      this.timeLeft = 0;
+      this.updateHUD();
+      this.gameOver();
+      return;
+    }
+
+    // Update timer in HUD when second changes
+    const currentSecond = Math.ceil(this.timeLeft);
+    if (currentSecond !== this.lastDisplayedSecond) {
+      this.lastDisplayedSecond = currentSecond;
+      if (this.hudTime) {
+        this.hudTime.textContent = currentSecond;
+      }
+    }
+
+    // Increase speed every 2.5 seconds
+    this.speedTimer += dt;
+    if (this.speedTimer >= 2.5) {
+      this.speedTimer -= 2.5;
+      this.increaseGameSpeed();
+    }
+
     // Movement
     if (this.player.movingLeft && this.player.x > 0) {
       this.player.x -= this.player.speed;
@@ -223,10 +275,9 @@ export class ArcadeMinigame {
 
     // Spawning items
     this.spawnTimer++;
-    if (this.spawnTimer > Math.max(25, 60 - this.difficulty * 4)) {
+    if (this.spawnTimer > Math.max(20, 60 - this.difficulty * 4)) {
       this.spawnItem();
       this.spawnTimer = 0;
-      this.difficulty += 0.05;
     }
 
     // Update items & collision
