@@ -7,7 +7,7 @@ import { ArcadeMinigame } from './minigame.js';
  * TECHNOVA 2027 — MAIN APPLICATION LOGIC
  */
 
-document.addEventListener('DOMContentLoaded', () => {
+function initApp() {
   // 1. INITIALIZE 3D ARCADE HERO EXPERIENCE
   const heroScene = new RetroArcadeScene('three-canvas');
   if (heroScene) {
@@ -665,4 +665,10 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   console.log('👾 [TECHNOVA 2027] Retro Arcade Systems Operational.');
-});
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initApp);
+} else {
+  initApp();
+}

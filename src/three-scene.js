@@ -38,20 +38,40 @@ export class RetroArcadeScene {
     this.scene.fog = new THREE.FogExp2(0x070707, 0.04);
 
     // 2. CAMERA SETUP
-    const width = this.canvas.parentElement.clientWidth;
-    const height = this.canvas.parentElement.clientHeight;
-    this.camera = new THREE.PerspectiveCamera(50, width / height, 0.1, 100);
+    const parent = this.canvas.parentElement;
+    let width = parent ? parent.clientWidth : window.innerWidth;
+    let height = parent ? parent.clientHeight : window.innerHeight;
+    if (!width || width <= 0) width = window.innerWidth || 800;
+    if (!height || height <= 0) height = window.innerHeight || 600;
+
+    const aspect = height > 0 ? width / height : 1.77;
+    this.camera = new THREE.PerspectiveCamera(50, aspect, 0.1, 100);
     this.camera.position.set(0, 0, 16);
 
     // 3. RENDERER SETUP
-    this.renderer = new THREE.WebGLRenderer({
-      canvas: this.canvas,
-      antialias: true,
-      alpha: true,
-      powerPreference: 'high-performance'
-    });
+    try {
+      this.renderer = new THREE.WebGLRenderer({
+        canvas: this.canvas,
+        antialias: true,
+        alpha: true,
+        powerPreference: 'high-performance'
+      });
+    } catch (err) {
+      console.warn('[3D Arcade] WebGLRenderer high-perf creation failed, attempting fallback:', err);
+      try {
+        this.renderer = new THREE.WebGLRenderer({
+          canvas: this.canvas,
+          antialias: false,
+          alpha: true
+        });
+      } catch (err2) {
+        console.error('[3D Arcade] WebGL not supported or disabled in this browser:', err2);
+        return;
+      }
+    }
+
     this.renderer.setSize(width, height);
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
     this.renderer.toneMappingExposure = 1.2;
 
@@ -67,10 +87,22 @@ export class RetroArcadeScene {
     this.createNeonPolyhedra();
     this.createStarfield();
 
-    // 6. EVENT LISTENERS
+    // 6. EVENT LISTENERS & RESIZE OBSERVER
     window.addEventListener('resize', this.onResize.bind(this));
     window.addEventListener('mousemove', this.onMouseMove.bind(this));
     this.canvas.addEventListener('click', this.onClick.bind(this));
+
+    if (typeof ResizeObserver !== 'undefined' && parent) {
+      this.resizeObserver = new ResizeObserver(() => {
+        this.onResize();
+      });
+      this.resizeObserver.observe(parent);
+    }
+
+    // Secondary layout sync after initial render cycle
+    setTimeout(() => {
+      this.onResize();
+    }, 100);
 
     // 7. START RENDER LOOP
     this.animate();
@@ -520,13 +552,19 @@ export class RetroArcadeScene {
 
   // EVENT HANDLERS
   onResize() {
-    if (!this.canvas || !this.canvas.parentElement) return;
-    const width = this.canvas.parentElement.clientWidth;
-    const height = this.canvas.parentElement.clientHeight;
+    if (!this.canvas || !this.camera || !this.renderer) return;
+    const parent = this.canvas.parentElement;
+    let width = parent ? parent.clientWidth : window.innerWidth;
+    let height = parent ? parent.clientHeight : window.innerHeight;
 
-    this.camera.aspect = width / height;
+    if (!width || width <= 0) width = window.innerWidth || 800;
+    if (!height || height <= 0) height = window.innerHeight || 600;
+
+    const aspect = height > 0 ? width / height : 1.77;
+    this.camera.aspect = aspect;
     this.camera.updateProjectionMatrix();
     this.renderer.setSize(width, height);
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
   }
 
   onMouseMove(e) {
@@ -589,7 +627,12 @@ export class RetroArcadeScene {
 
   // RENDER & ANIMATION LOOP
   animate() {
+    if (!this.renderer || !this.scene || !this.camera) return;
     requestAnimationFrame(this.animate.bind(this));
+
+    if (!Number.isFinite(this.camera.aspect) || this.camera.aspect <= 0) {
+      this.onResize();
+    }
 
     const delta = this.clock.getDelta();
     const elapsedTime = this.clock.getElapsedTime();
