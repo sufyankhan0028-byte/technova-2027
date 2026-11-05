@@ -156,15 +156,32 @@ function initApp() {
   });
 
   // 6. LIVE RETRO ARCADE COUNTDOWN TIMER
-  const targetDate = new Date('2027-03-12T09:00:00+05:30').getTime();
+  // Target: January 9, 2027 at 7:00 AM IST (Indian Standard Time, UTC+5:30)
+  const targetDate = new Date('2027-01-09T07:00:00+05:30').getTime();
+  let countdownTimerId = null;
 
   function updateCountdown() {
-    const now = new Date().getTime();
+    const countdownEl = document.getElementById('arcade-countdown');
+    if (!countdownEl) return;
+
+    const now = Date.now();
     const distance = targetDate - now;
 
     if (distance <= 0) {
-      document.getElementById('arcade-countdown').innerHTML =
-        '<div class="timer-header"><span class="timer-led-dot"></span><span>HACKATHON IS LIVE!</span></div>';
+      if (countdownTimerId) {
+        clearInterval(countdownTimerId);
+        countdownTimerId = null;
+      }
+      countdownEl.innerHTML = `
+        <div class="timer-header">
+          <span class="timer-led-dot"></span>
+          <span class="timer-title">HACKATHON IS LIVE!</span>
+          <span class="timer-status">[EVENT STARTED]</span>
+        </div>
+        <div class="timer-live-banner" style="text-align:center;font-family:var(--font-pixel);font-size:clamp(0.85rem,2vw,1.2rem);color:var(--electric-yellow);padding:10px 0;letter-spacing:1px;">
+          🚀 HACKATHON IN PROGRESS • GAME ON! 👾
+        </div>
+      `;
       return;
     }
 
@@ -185,7 +202,7 @@ function initApp() {
   }
 
   updateCountdown();
-  setInterval(updateCountdown, 1000);
+  countdownTimerId = setInterval(updateCountdown, 1000);
 
   // 7. MOBILE NAVIGATION DRAWER
   const hamburgerBtn = document.getElementById('hamburger-btn');
@@ -674,7 +691,9 @@ function initApp() {
   const ticketTeamDisplay = document.getElementById('ticket-team-display');
   const closeTicketBtn = document.getElementById('close-ticket-btn');
 
-  // Trigger buttons that open the modal
+  // Trigger buttons that redirect to Unstop registration page
+  const UNSTOP_REGISTRATION_URL = 'https://unstop.com/hackathons/technova-2027-burhani-college-mumbai-1786992';
+
   const openRegBtns = [
     document.getElementById('open-register-nav-btn'),
     document.getElementById('mobile-register-btn'),
@@ -684,15 +703,11 @@ function initApp() {
 
   openRegBtns.forEach((btn) => {
     if (btn) {
-      btn.addEventListener('click', () => {
+      btn.addEventListener('click', (e) => {
         arcadeAudio.playCoin();
-        if (registerModal) {
-          registerModal.classList.remove('hidden');
-          // Reset view to form if previously submitted
-          if (regForm && ticketDisplay) {
-            regForm.classList.remove('hidden');
-            ticketDisplay.classList.add('hidden');
-          }
+        if (btn.tagName.toLowerCase() !== 'a' || !btn.getAttribute('href')) {
+          e.preventDefault();
+          window.open(UNSTOP_REGISTRATION_URL, '_blank', 'noopener,noreferrer');
         }
       });
     }
