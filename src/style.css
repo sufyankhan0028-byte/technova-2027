@@ -659,6 +659,13 @@ body:not(.crt-enabled) .crt-overlay {
   text-shadow: none;
 }
 
+.tagline-gifts {
+  color: var(--electric-yellow);
+  font-weight: 700;
+  text-shadow: none;
+  white-space: nowrap;
+}
+
 /* Hero Stats Bar */
 .hero-stats-bar {
   display: flex;
@@ -1188,7 +1195,7 @@ body:not(.crt-enabled) .crt-overlay {
 /* Metric Counters Row */
 .metrics-row {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(6, 1fr);
   gap: 16px;
   background: rgba(13, 13, 18, 0.6);
   border: 1px solid var(--border-subtle);
@@ -1208,10 +1215,11 @@ body:not(.crt-enabled) .crt-overlay {
 
 .metric-num {
   font-family: var(--font-pixel);
-  font-size: 1.8rem;
+  font-size: clamp(1.1rem, 1.7vw, 1.8rem);
   color: var(--electric-yellow);
   text-shadow: none;
   margin-bottom: 6px;
+  white-space: nowrap;
 }
 
 .metric-currency {
@@ -2668,6 +2676,13 @@ body:not(.crt-enabled) .crt-overlay {
   }
   .metrics-row {
     grid-template-columns: repeat(3, 1fr);
+    gap: 16px 0;
+  }
+  .metric-box:nth-child(3n) {
+    border-right: none;
+  }
+  .metric-box:nth-child(-n+3) {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   }
 }
 
@@ -2720,6 +2735,19 @@ body:not(.crt-enabled) .crt-overlay {
   }
   .metrics-row {
     grid-template-columns: 1fr 1fr;
+    gap: 12px 0;
+  }
+  .metric-box {
+    border-right: 1px solid rgba(255, 255, 255, 0.08);
+  }
+  .metric-box:nth-child(2n) {
+    border-right: none;
+  }
+  .metric-box:nth-child(-n+4) {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  }
+  .metric-box:nth-child(n+5) {
+    border-bottom: none;
   }
   .timeline-8h-body {
     padding-left: 32px;
