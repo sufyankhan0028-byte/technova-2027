@@ -2065,6 +2065,91 @@ body:not(.crt-enabled) .crt-overlay {
   margin-bottom: 0;
 }
 
+.partners-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 340px));
+  gap: 32px;
+  margin-top: 46px;
+}
+
+.partner-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 56px 24px 36px;
+  border: 2px dashed rgba(255, 255, 255, 0.32);
+  border-radius: 0;
+  background-color: #0a0c0e;
+  background-image: conic-gradient(
+    from 0deg at 3px 3px,
+    transparent 270deg,
+    rgba(255, 255, 255, 0.13) 270deg
+  );
+  background-size: 28px 28px;
+  background-position: 10px 10px;
+  transition: border-color var(--transition-fast), transform var(--transition-normal);
+}
+
+.partner-card:hover {
+  border-color: var(--electric-yellow);
+  transform: translateY(-4px);
+}
+
+.partner-designation {
+  position: absolute;
+  top: -15px;
+  left: -14px;
+  background: var(--electric-yellow);
+  color: #070707;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1.25;
+  letter-spacing: 0.2px;
+  padding: 6px 14px;
+  border-radius: 0;
+  z-index: 2;
+}
+
+.partner-logo-frame {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #ffffff;
+  border-radius: 4px;
+  padding: 2px 8px;
+  margin: 0 auto 30px;
+  max-width: 100%;
+}
+
+.partner-logo-img {
+  display: block;
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: 62px;
+  object-fit: contain;
+}
+
+.partner-name {
+  font-family: var(--font-pixel);
+  font-size: 18px;
+  color: #ffffff;
+  letter-spacing: 0.5px;
+  line-height: 1.4;
+  margin-bottom: 18px;
+}
+
+.partner-desc {
+  font-family: var(--font-mono);
+  font-size: 13.5px;
+  color: #cfd5dc;
+  line-height: 1.75;
+  text-align: center;
+}
+
 
 /* ==========================================================================
    FAQ SECTION
@@ -2732,6 +2817,30 @@ body:not(.crt-enabled) .crt-overlay {
   }
   .tracks-grid {
     grid-template-columns: 1fr;
+  }
+  .partners-grid {
+    grid-template-columns: minmax(0, 340px);
+    justify-content: center;
+    padding-left: 10px;
+    margin-top: 40px;
+  }
+  .partner-card {
+    padding: 50px 20px 30px;
+  }
+  .partner-designation {
+    font-size: 12px;
+    padding: 5px 12px;
+    left: -10px;
+  }
+  .partner-logo-img {
+    max-height: 54px;
+  }
+  .partner-name {
+    font-size: 16px;
+  }
+  .partner-desc {
+    font-size: 13px;
+    line-height: 1.7;
   }
   .metrics-row {
     grid-template-columns: 1fr 1fr;
